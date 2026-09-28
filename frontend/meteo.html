@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>高原气象灾害智能预警 · 气象场可视化</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121b2e; --panel-2:#0f1728; --line:#22304d;
+    --ink:#e8eefb; --ink-2:#9db0d0; --ink-3:#6b7ea0;
+    --hot:#ff5b4a; --warm:#ffb020; --cool:#31c9a3; --cold:#4aa3ff; --violet:#9d6bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 700px at 15% -10%,#16233c 0%,var(--bg) 55%);
+    color:var(--ink); font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    min-height:100vh}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    padding:16px 22px;border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg,#0e1728 0%,#132039 60%,#0e1728 100%)}
+  header h1{font-size:19px;margin:0;letter-spacing:.02em;font-weight:600}
+  header h1 small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:400;letter-spacing:.06em;margin-top:2px}
+  .spacer{flex:1}
+  select,button{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);
+    border-radius:8px;padding:7px 12px;font-size:13px;font-family:inherit;cursor:pointer}
+  button:hover{border-color:#3a5285}
+  button.primary{background:#1c3f7a;border-color:#2b5cab}
+  .status{font-size:12px;color:var(--ink-2)}
+  .wrap{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;padding:14px 22px 40px;max-width:1560px;margin:0 auto}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card h2{font-size:14px;margin:0 0 4px;font-weight:600;letter-spacing:.03em;
+    display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--cold);box-shadow:0 0 8px var(--cold)}
+  .card .hint{font-size:11.5px;color:var(--ink-3);margin:0 0 10px}
+  .full{grid-column:1/-1}
+  canvas{width:100%;display:block;border-radius:9px;background:#0a1120}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+  .chipbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .chip{font-size:11.5px;padding:3px 9px;border:1px solid var(--line);border-radius:20px;
+    color:var(--ink-2);cursor:pointer;user-select:none;background:var(--panel-2)}
+  .chip.on{border-color:#3d6fd0;color:#cfe0ff;background:#16294b}
+  table{border-collapse:collapse;width:100%;font-size:12px}
+  th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  th{color:var(--ink-2);font-weight:500;text-align:right}
+  td:first-child,th:first-child{text-align:left}
+  .hm{display:grid;gap:2px;grid-template-columns:64px repeat(var(--cols),1fr);align-items:center;font-size:10.5px}
+  .hm .cell{height:19px;border-radius:3px;background:#16233c}
+  .hm .lbl{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar{display:grid;grid-template-columns:66px 1fr 62px;gap:8px;align-items:center;margin:5px 0;font-size:12px}
+  .bar .track{height:12px;background:#16233c;border-radius:6px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2b5cab,#4aa3ff)}
+  .bar .val{color:var(--ink-2);text-align:right}
+  .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px dashed #1d2a45}
+  .kv span:last-child{color:var(--ink);font-variant-numeric:tabular-nums}
+  .note{font-size:11.5px;color:var(--ink-3);margin-top:9px;line-height:1.6}
+  .err{color:#ff8f80}
+</style>
+</head>
+<body>
+<header>
+  <h1>高原气象灾害智能预警<small>TP-STNet · 气象场时空可视化 / 通道归因 / 注意力分布</small></h1>
+  <div class="spacer"></div>
+  <select id="monthSel" title="选择月份"></select>
+  <button class="primary" id="reload">刷新</button>
+  <span class="status" id="status">加载中…</span>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2><span class="dot"></span>近地面气温场 · 等温线 · 风场</h2>
+    <p class="hint">26 个县为点位观测；面状场由反距离加权（IDW，p=2）插值生成，<b>且仅在有观测支撑的范围内着色</b>——
+      离最近观测点超过 170 km 的格子留空，不做凭空外推。插值仅用于可视化，不参与任何指标计算。</p>
+    <canvas id="cTemp" height="430"></canvas>
+    <div class="legend">
+      <span><i style="background:#4aa3ff"></i>-30℃</span>
+      <span><i style="background:#31c9a3"></i>-10℃</span>
+      <span><i style="background:#ffb020"></i>0℃</span>
+      <span><i style="background:#ff5b4a"></i>10℃+</span>
+      <span style="color:#8fa4c8">→ 箭头长度 = 风速（m/s）</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot" style="background:#ffb020;box-shadow:0 0 8px #ffb020"></span>模型风险场</h2>
+    <p class="hint">TP-STNet 输出风险概率，按月刷新。色斑为 IDW 插值，圆点为县中心实测点位。</p>
+    <canvas id="cRisk" height="430"></canvas>
+    <div class="legend">
+      <span><i style="background:#31c9a3"></i>相对低</span>
+      <span><i style="background:#ffb020"></i>低</span>
+      <span><i style="background:#ff7a3d"></i>中</span>
+      <span><i style="background:#ff5b4a"></i>相对高</span>
+    </div>
+    <p class="note" id="riskScale"></p>
+    <p class="note">26 个县近似沿高原东南缘呈<b>带状分布</b>（近似共线），因此有观测支撑的区域本身就是一个斜带，
+      带外留空是刻意的——不做无观测支撑的外推。这也意味着「面状色斑」对这份点位数据只是示意，
+      定量结论应看下方明细表。</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot" style="background:#9d6bff;box-shadow:0 0 8px #9d6bff"></span>通道归因（点击地图上的县）</h2>
+    <p class="hint" id="attrWho">—</p>
+    <div id="attrBars"><p class="note">正在加载…</p></div>
+    <div id="attrMeta"></div>
+    <p class="note">
+      方法：<b>通道遮挡</b>——把该通道在整个回看窗口上置零，测风险下降幅度。
+      语义是「模型对该通道的依赖度」，不是因果贡献。负值表示该通道信息被移除后风险反而上升。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2><span class="dot" style="background:#31c9a3;box-shadow:0 0 8px #31c9a3"></span>跨模态注意力（时间维）</h2>
+    <p class="hint">行 = 县，列 = 回看窗口内的月份。颜色越亮表示模型在该时段的注意力权重越高。</p>
+    <div class="hm" id="heat"></div>
+    <p class="note">注意力只反映模型关注哪些时段，不等同因果归因。</p>
+  </div>
+
+  <div class="card full">
+    <h2><span class="dot" style="background:#4aa3ff;box-shadow:0 0 8px #4aa3ff"></span>26 县气象与风险明细</h2>
+    <p class="hint">风速已由 km/h 换算为 m/s；雪深已由米换算为厘米。单位以接口自报值为准。</p>
+    <div style="max-height:340px;overflow:auto">
+      <table id="tbl">
+        <thead><tr>
+          <th>县</th><th>气温℃</th><th>最低℃</th><th>降水mm</th><th>降雪cm</th><th>雪深cm</th>
+          <th>辐射MJ/m²</th><th>风速m/s</th><th>风向°</th><th>湿度%</th><th>风险</th><th>等级</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const API = '/api/deep';
+let FIELDS = null, RISK = null, ATTN = null, MONTH = null;
+
+const PAL = {
+  risk: [[0,'#31c9a3'],[0.45,'#ffb020'],[0.7,'#ff7a3d'],[1,'#ff5b4a']],
+  temp: [[0,'#4aa3ff'],[0.35,'#31c9a3'],[0.6,'#ffb020'],[1,'#ff5b4a']]
+};
+function ramp(stops, t){
+  t = Math.max(0, Math.min(1, t));
+  for (let i=0;i<stops.length-1;i++){
+    const [a,ca]=stops[i], [b,cb]=stops[i+1];
+    if (t<=b){ const k=(t-a)/Math.max(1e-6,b-a); return mix(ca,cb,k); }
+  }
+  return stops[stops.length-1][1];
+}
+function mix(c1,c2,k){
+  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1]=p(c1), [r2,g2,b2]=p(c2);
+  return `rgb(${Math.round(r1+(r2-r1)*k)},${Math.round(g1+(g2-g1)*k)},${Math.round(b1+(b2-b1)*k)})`;
+}
+
+async function jget(u){ const r = await fetch(u); if(!r.ok) throw new Error(u+' → '+r.status); return r.json(); }
+
+function project(regs, W, H, pad){
+  const lons = regs.map(r=>r.longitude), lats = regs.map(r=>r.latitude);
+  const x0=Math.min(...lons), x1=Math.max(...lons), y0=Math.min(...lats), y1=Math.max(...lats);
+  const sx = (W-pad*2)/Math.max(1e-6,(x1-x0)), sy = (H-pad*2)/Math.max(1e-6,(y1-y0));
+  const s = Math.min(sx, sy);
+  const ox = (W - (x1-x0)*s)/2, oy = (H - (y1-y0)*s)/2;
+  // 把像素/度换算成像素/公里（纬度 1°≈111km），供距离掩膜使用
+  const pxPerKm = s / 111.0;
+  const pts = regs.map(r=>({
+    ...r,
+    px: ox + (r.longitude-x0)*s,
+    py: H - (oy + (r.latitude-y0)*s)      // 纬度向上
+  }));
+  pts.forEach(p=>p.pxPerKm = pxPerKm);
+  return pts;
+}
+
+/* IDW 插值到网格并着色。
+   ⚠️ 带**距离掩膜**：离最近观测点超过 SUPPORT_KM 的格子不着色。
+   26 个县是稀疏点位，覆盖不到的地方硬插值等于凭空造数据 —— 留空比造色斑诚实。 */
+const SUPPORT_KM = 170;
+function drawField(canvas, pts, valueOf, colorOf, drawContours, range){
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = parseInt(canvas.getAttribute('height'),10);
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  if (!pts.length) return;
+  const pxPerKm = pts.pxPerKm || 1;
+  const lim = (SUPPORT_KM * pxPerKm) ** 2;
+
+  const STEP = 6, power = 2;
+  const gw = Math.ceil(W/STEP), gh = Math.ceil(H/STEP);
+  const img = ctx.createImageData(gw, gh);
+  for (let gx=0, i=0; gx<W; gx+=STEP){
+    for (let gy=0; gy<H; gy+=STEP, i++){
+      let num=0, den=0, nearest=Infinity;
+      for (const p of pts){
+        const dx=gx-p.px, dy=gy-p.py, d2=dx*dx+dy*dy;
+        if (d2 < nearest) nearest = d2;
+        if (d2 < 1){ num = valueOf(p); den = 1; break; }
+        const w = 1/Math.pow(d2, power/2);
+        num += w*valueOf(p); den += w;
+      }
+      // 软衰减而非硬切：硬切会在支撑带边缘切出「梳齿」伪影（26 县近似共线，支撑区是窄带）
+      const dKm = Math.sqrt(nearest) / pxPerKm;
+      const a = Math.max(0, Math.min(1, (SUPPORT_KM - dKm) / (SUPPORT_KM * 0.45)));
+      if (a <= 0.02){ img.data[i*4+3] = 0; continue; }        // 无观测支撑 → 透明
+      const v = den>0 ? num/den : 0;
+      const c = colorOf(v, range);
+      img.data[i*4]=c[0]; img.data[i*4+1]=c[1]; img.data[i*4+2]=c[2]; img.data[i*4+3]=Math.round(228*a);
+    }
+  }
+  const off = document.createElement('canvas');
+  off.width = gw; off.height = gh;
+  off.getContext('2d').putImageData(img,0,0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(off, 0, 0, W, H);
+
+  if (drawContours) contour(ctx, pts, valueOf, W, H, STEP, lim);
+
+  ctx.font = '10px ui-sans-serif,system-ui'; ctx.textAlign='center';
+  for (const p of pts){
+    ctx.beginPath(); ctx.arc(p.px, p.py, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#eaf2ff'; ctx.fill();
+    ctx.strokeStyle = 'rgba(10,17,32,.85)'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+}
+
+/* 简易等值线：对 2℃ 倍数的等值线做点采样（只求视觉可读，不追求严格等值线追踪）。
+   同样受距离掩膜约束 —— 没有观测支撑的地方不画线。 */
+function contour(ctx, pts, valueOf, W, H, STEP, lim){
+  const levels = [-30,-25,-20,-15,-10,-5,0,5,10,15,20];
+  const gw = Math.ceil(W/STEP), gh = Math.ceil(H/STEP);
+  const G = [];
+  for (let xi=0; xi<gw; xi++){ const col=[];
+    for (let yi=0; yi<gh; yi++){
+      const x=xi*STEP, y=yi*STEP;
+      let num=0,den=0,nearest=Infinity;
+      for (const p of pts){ const dx=x-p.px,dy=y-p.py,d2=dx*dx+dy*dy;
+        if(d2<nearest)nearest=d2;
+        if(d2<1){num=valueOf(p);den=1;break;} const w=1/d2; num+=w*valueOf(p); den+=w; }
+      col.push((lim && nearest>lim) ? null : (den?num/den:0));
+    }
+    G.push(col);
+  }
+  ctx.strokeStyle='rgba(255,255,255,.42)'; ctx.lineWidth=1;
+  for (const L of levels){
+    ctx.beginPath();
+    for (let xi=0; xi<gw-1; xi++) for (let yi=0; yi<gh-1; yi++){
+      const a=G[xi][yi], b=G[xi+1][yi], c=G[xi][yi+1], d=G[xi+1][yi+1];
+      if (a===null||b===null||c===null||d===null) continue;
+      const mn=Math.min(a,b,c,d), mx=Math.max(a,b,c,d);
+      if (L>=mn && L<=mx && mx-mn>1e-6){
+        ctx.moveTo(xi*STEP, yi*STEP);
+        ctx.arc(xi*STEP, yi*STEP, 1.1, 0, Math.PI*2);
+      }
+    }
+    ctx.stroke();
+  }
+}
+
+function drawWind(canvas, pts){
+  const ctx = canvas.getContext('2d');
+  const W = canvas.clientWidth;
+  ctx.save();
+  for (const p of pts){
+    const sp = p.wind_speed_ms || 0, dir = (p.wind_dir_deg||0) * Math.PI/180;
+    const len = 6 + sp*3.4;
+    // 气象风向：风的来向；箭头指向去向 → 加 π
+    const a = dir + Math.PI;
+    const x2 = p.px + Math.cos(a)*len, y2 = p.py - Math.sin(a)*len;
+    ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = 'rgba(180,215,255,.95)'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2 - Math.cos(a-0.42)*5, y2 + Math.sin(a-0.42)*5);
+    ctx.lineTo(x2 - Math.cos(a+0.42)*5, y2 + Math.sin(a+0.42)*5);
+    ctx.closePath(); ctx.fillStyle='rgba(180,215,255,.95)'; ctx.fill();
+  }
+  ctx.restore();
+}
+
+function renderHeat(){
+  const cols = ATTN.lookback_months.length;
+  const box = $('heat');
+  box.style.setProperty('--cols', cols);
+  let mx = 0; ATTN.attention.forEach(r=>r.forEach(v=>mx=Math.max(mx,v)));
+  let html = '<div class="lbl"></div>' + ATTN.lookback_months.map(m=>`<div class="lbl" style="text-align:center">${m.slice(2)}</div>`).join('');
+  ATTN.attention.forEach((row,i)=>{
+    const nm = (FIELDS.regions.find(r=>r.region_id===ATTN.regions[i])||{}).region_name || ATTN.regions[i];
+    html += `<div class="lbl" title="${nm}">${nm}</div>`;
+    row.forEach(v=>{
+      const t = mx>0 ? v/mx : 0;
+      html += `<div class="cell" title="${(t*100).toFixed(1)}%" style="background:${mix('#16233c','#31c9a3',Math.pow(t,.7))}"></div>`;
+    });
+  });
+  box.innerHTML = html;
+}
+
+async function loadAttr(rid){
+  try{
+    const a = await jget(`${API}/attribution/${encodeURIComponent(rid)}?month=${MONTH}`);
+    $('attrWho').innerHTML = `<b>${a.region_name}</b> · ${a.month} · 风险 ${a.risk_score}（${a.risk_level}）`;
+    const mx = Math.max(...a.channel_attribution.map(c=>Math.abs(c.risk_drop)), 1e-6);
+    $('attrBars').innerHTML = a.channel_attribution.map(c=>{
+      const w = Math.abs(c.risk_drop)/mx*100;
+      const col = c.risk_drop>=0 ? 'linear-gradient(90deg,#2b5cab,#4aa3ff)'
+                                 : 'linear-gradient(90deg,#7a3030,#ff8f80)';
+      return `<div class="bar"><span>${c.channel}</span>
+        <span class="track"><span class="fill" style="width:${w}%;background:${col}"></span></span>
+        <span class="val">${c.risk_drop>=0?'+':''}${c.risk_drop.toFixed(3)}</span></div>`;
+    }).join('');
+    const p = a.physics_residual;
+    $('attrMeta').innerHTML = `<div class="kv"><span>递减率残差（℃²，越小越符合物理）</span>
+      <span>${p.lapse_rate_residual_c2.toFixed(2)}</span></div>`;
+  }catch(e){ $('attrBars').innerHTML = `<p class="note err">归因加载失败：${e.message}</p>`; }
+}
+
+function renderTable(){
+  const byId = {}; (RISK.regions||[]).forEach(r=>byId[r.region_id]=r);
+  const rows = FIELDS.regions.map(f=>{
+    const k = byId[f.region_id] || {};
+    return `<tr data-id="${f.region_id}" style="cursor:pointer">
+      <td>${f.region_name}</td><td>${f.temperature_c}</td><td>${f.temperature_min_c}</td>
+      <td>${f.precipitation_mm}</td><td>${f.snowfall_cm}</td><td>${f.snow_depth_cm}</td>
+      <td>${f.radiation_mj}</td><td>${f.wind_speed_ms}</td><td>${f.wind_dir_deg}</td><td>${f.humidity_pct}</td>
+      <td>${k.risk_score!==undefined?k.risk_score:'—'}</td><td>${k.risk_level||'—'}</td></tr>`;
+  }).join('');
+  const tb = $('tbl').querySelector('tbody'); tb.innerHTML = rows;
+  tb.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>loadAttr(tr.dataset.id));
+}
+
+async function render(){
+  $('status').textContent = '加载中…'; $('status').className='status';
+  try{
+    if (!MONTH) MONTH = (await jget(`${API}/risk`)).month;
+    [FIELDS, RISK, ATTN] = await Promise.all([
+      jget(`${API}/fields?month=${MONTH}`),
+      jget(`${API}/risk?month=${MONTH}`),
+      jget(`${API}/attention?month=${MONTH}`)
+    ]);
+    const byId = {}; RISK.regions.forEach(r=>byId[r.region_id]=r);
+    const pts = project(FIELDS.regions, $('cTemp').clientWidth, 430, 34)
+                  .map(p=>({...p, risk:(byId[p.region_id]||{}).risk_score||0}));
+
+    const tMin = Math.min(...FIELDS.regions.map(r=>r.temperature_c));
+    const tMax = Math.max(...FIELDS.regions.map(r=>r.temperature_c));
+    drawField($('cTemp'), pts, p=>p.temperature_c,
+      (v, rg)=>{ const t=((v-rg.min)/Math.max(1e-6,rg.max-rg.min)); const c=ramp(PAL.temp,t);
+           const q=c.match(/\d+/g); return [+q[0],+q[1],+q[2]]; }, true, {min:tMin, max:tMax});
+    drawWind($('cTemp'), pts);
+
+    // 风险值当月集中在很窄的区间（约 0.33~0.41），用固定刻度会全是一个颜色。
+    // 因此按**当月 min-max 归一化**着色，并在图上标注是相对刻度。
+    const rVals = pts.map(p=>p.risk);
+    const rMin = Math.min(...rVals), rMax = Math.max(...rVals);
+    drawField($('cRisk'), pts, p=>p.risk,
+      (v, rg)=>{ const t=(v-rg.min)/Math.max(1e-6,rg.max-rg.min); const c=ramp(PAL.risk,t);
+           const q=c.match(/\d+/g); return [+q[0],+q[1],+q[2]]; }, false, {min:rMin, max:rMax});
+    $('riskScale').textContent =
+      `相对刻度：${rMin.toFixed(3)} → ${rMax.toFixed(3)}（当月极差仅 ${(rMax-rMin).toFixed(3)}，`
+      + `绝对值区间见下表；颜色只反映县间相对高低）`;
+
+    renderHeat(); renderTable(); renderTableSel();
+    const top = RISK.regions.slice().sort((a,b)=>b.risk_score-a.risk_score)[0];
+    if (top) loadAttr(top.region_id);
+    $('status').textContent = `${MONTH} · ${FIELDS.n_regions} 县 · 已加载`;
+  }catch(e){
+    $('status').textContent = '加载失败：'+e.message; $('status').className='status err';
+  }
+}
+
+function renderTableSel(){}
+
+(async function init(){
+  try{
+    const r0 = await jget(`${API}/risk`);
+    MONTH = r0.month;
+    // 月份选择器：用元数据里的月份范围生成
+    const st = await jget(`${API}/status`);
+    const [a,b] = st.month_range;
+    const sel = $('monthSel'); sel.innerHTML='';
+    let y=+a.slice(0,4), m=+a.slice(5,7), ey=+b.slice(0,4), em=+b.slice(5,7);
+    const list=[];
+    while (y<ey || (y===ey && m<=em)){ list.push(`${y}-${String(m).padStart(2,'0')}`);
+      m++; if(m>12){m=1;y++;} }
+    list.reverse().forEach(v=>{
+      const o=document.createElement('option'); o.value=v; o.textContent=v;
+      if(v===MONTH) o.selected=true; sel.appendChild(o);
+    });
+    sel.onchange = ()=>{ MONTH = sel.value; render(); };
+  }catch(e){ $('status').textContent = '初始化失败：'+e.message; $('status').className='status err'; }
+  $('reload').onclick = render;
+  window.addEventListener('resize', ()=>{ clearTimeout(window._t); window._t=setTimeout(render,260); });
+  render();
+})();
+</script>
+</body>
+</html>

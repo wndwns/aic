@@ -1,0 +1,81 @@
+{
+ "built_from": "climate_era5_multivar.json",
+ "n_months": 60,
+ "n_regions": 26,
+ "month_range": [
+  "2020-01",
+  "2024-12"
+ ],
+ "monthly_features": [
+  "t_mean",
+  "t_max",
+  "t_min",
+  "t_range",
+  "t_min_abs",
+  "cold_days",
+  "severe_cold_days",
+  "frost_days",
+  "t_anom",
+  "d_t",
+  "p_sum",
+  "p_max",
+  "rain_days",
+  "snowfall_sum",
+  "snow_days",
+  "max_dry_run",
+  "snow_depth_max",
+  "snow_depth_mean",
+  "snow_depth_trend",
+  "p_anom_z",
+  "rad_sum",
+  "rad_per_day",
+  "wind_max",
+  "wind_mean",
+  "wind_dir_sin",
+  "wind_dir_cos",
+  "rh_mean",
+  "melt_index",
+  "energy_index"
+ ],
+ "remote_features": [
+  "ndvi",
+  "ndvi_change_pct",
+  "vegetation_cover_pct",
+  "snow_cover_pct",
+  "degradation_level"
+ ],
+ "n_meteo_features": 29,
+ "n_remote_features": 5,
+ "lookback": 6,
+ "horizons": [
+  1,
+  2,
+  3
+ ],
+ "seq_shape": [
+  60,
+  6,
+  26,
+  34
+ ],
+ "positive_cells": 96,
+ "confirmed_cells": 128,
+ "unlabeled_cells": 1432,
+ "rs_months_covered": 2002,
+ "lapse_rate_c_per_km": 6.5,
+ "severity_scale": {
+  "低": 1.0,
+  "中": 2.0,
+  "高": 3.0,
+  "特重": 4.0,
+  "特重度": 4.0,
+  "严重": 3.0
+ },
+ "caveats": [
+  "负例＝「未确认」月，不等同确认无灾；unlabeled 张量单独保留该信息。",
+  "积雪能量平衡为简化代理（只有日累计短波辐射，无长波/反照率/风廓线），不是严格闭合。",
+  "任务 B 目标是「未来 h 个月内的最大灾情强度」（0~4 连续量），同时保留二值版 horizon_bin。",
+  "灾情强度的数值刻度来自标签里的 severity 文字档（低/中/高），不是物理量纲。",
+  "遥感特征仅覆盖 2020-2024，缺失月份为 0。"
+ ]
+}

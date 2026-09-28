@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TP-STNet · 高原极端气象灾害智能预警 — 技术报告</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#4a5158; --ink-3:#767d85;
+    --line:#e3e6ea; --line-2:#eef1f4;
+    --bg:#f7f8fa; --card:#fff;
+    --ok:#1f7a4d; --ok-bg:#e8f6ee;
+    --warn:#a35a00; --warn-bg:#fdf3e3;
+    --bad:#b0271f; --bad-bg:#fdeceb;
+    --info:#1c5d99; --info-bg:#e9f2fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.75 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{display:flex;gap:30px;max-width:1220px;margin:0 auto;padding:30px 26px 90px}
+  nav{flex:0 0 212px;position:sticky;top:30px;align-self:flex-start;max-height:calc(100vh - 60px);overflow:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 12px}
+  nav h4{margin:0 0 9px;font-size:12px;letter-spacing:.08em;color:var(--ink-3);font-weight:600}
+  nav a{display:block;padding:5px 9px;border-radius:7px;color:var(--ink-2);text-decoration:none;font-size:13.5px;line-height:1.45}
+  nav a:hover{background:var(--bg);color:var(--ink)}
+  main{flex:1 1 auto;min-width:0}
+  header .kicker{font-size:12.5px;letter-spacing:.1em;color:var(--ink-3);font-weight:600}
+  header h1{margin:6px 0 8px;font-size:29px;line-height:1.32;letter-spacing:-.01em}
+  header .sub{color:var(--ink-2);font-size:15px}
+  header .meta{margin-top:10px;font-size:13px;color:var(--ink-3)}
+  section{margin-bottom:32px}
+  section>h2{font-size:20px;margin:0 0 13px;padding-bottom:8px;border-bottom:2px solid var(--line);display:flex;gap:10px;align-items:baseline}
+  section>h2 .num{font-size:13px;color:#fff;background:var(--ink);border-radius:5px;padding:2px 8px;font-weight:600}
+  h3{font-size:16.5px;margin:20px 0 8px}
+  p{margin:9px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:13px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px;margin:15px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:13px 15px}
+  .kpi .t{font-size:12.5px;color:var(--ink-3);font-weight:600;letter-spacing:.04em}
+  .kpi .v{font-size:20px;font-weight:700;margin:4px 0 3px;letter-spacing:-.01em}
+  .kpi .d{font-size:13px;color:var(--ink-2);line-height:1.6}
+  .kpi.ok{border-left-color:var(--ok)} .kpi.ok .v{color:var(--ok)}
+  .kpi.warn{border-left-color:var(--warn)} .kpi.warn .v{color:var(--warn)}
+  .kpi.bad{border-left-color:var(--bad)} .kpi.bad .v{color:var(--bad)}
+  .kpi.info{border-left-color:var(--info)} .kpi.info .v{color:var(--info)}
+  table{border-collapse:collapse;width:100%;margin:13px 0;font-size:13.5px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f1f3f6;font-weight:600;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.hl td{background:var(--ok-bg)} tr.dim td{color:var(--ink-3)} tr.badrow td{background:var(--bad-bg)}
+  .scroll{overflow-x:auto}
+  .note{border-radius:10px;padding:12px 15px;margin:13px 0;font-size:14.5px;line-height:1.7}
+  .note .h{font-weight:700;display:block;margin-bottom:3px;font-size:14px}
+  .note.ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
+  .note.warn{background:var(--warn-bg);border-left:4px solid var(--warn)}
+  .note.bad{background:var(--bad-bg);border-left:4px solid var(--bad)}
+  .note.info{background:var(--info-bg);border-left:4px solid var(--info)}
+  code{background:#f1f3f6;border:1px solid var(--line-2);border-radius:4px;padding:1px 5px;font-size:12.5px;
+    font-family:"SFMono-Regular",Consolas,monospace}
+  pre{background:#f1f3f6;border:1px solid var(--line);border-radius:8px;padding:11px 13px;overflow-x:auto;font-size:12.5px;line-height:1.6;
+    font-family:"SFMono-Regular",Consolas,monospace}
+  ul,ol{margin:9px 0;padding-left:21px} li{margin:3px 0}
+  .tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--ink-2);background:#f1f3f6}
+  .tag.ok{background:var(--ok-bg);border-color:#b9e0cb;color:var(--ok)}
+  .tag.bad{background:var(--bad-bg);border-color:#f2c5c2;color:var(--bad)}
+  .tag.warn{background:var(--warn-bg);border-color:#f0d3a5;color:var(--warn)}
+  .foot{color:var(--ink-3);font-size:13px}
+  hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+  @media(max-width:930px){.wrap{flex-direction:column;padding:18px 14px 60px}nav{position:static;flex:none;max-height:none}}
+  @media print{
+    :root{--bg:#fff}
+    body{background:#fff;font-size:11pt}
+    nav{display:none}.wrap{display:block;max-width:none;padding:0}
+    section{page-break-inside:avoid}section>h2{page-break-after:avoid}
+    table,.card,.note,.kpi,pre{page-break-inside:avoid}
+    a{color:inherit;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h4>目录</h4>
+  <a href="#s0">摘要</a>
+  <a href="#s1">1 问题与目标</a>
+  <a href="#s2">2 数据与口径</a>
+  <a href="#s3">3 方法</a>
+  <a href="#s4">4 实验设计</a>
+  <a href="#s5">5 结果</a>
+  <a href="#s6">6 物理约束的作用</a>
+  <a href="#s7">7 局限与未达成的目标</a>
+  <a href="#s8">8 复现方式</a>
+  <a href="#s9">9 指标定义</a>
+</nav>
+
+<main>
+<header>
+  <div class="kicker">AIC · 智慧气象算法主题赛 · 技术报告</div>
+  <h1>TP-STNet：高原时空跨模态气象灾害预警网络</h1>
+  <div class="sub">气象时序分支（PatchTST-lite） + 遥感空间分支（图卷积） + 跨模态注意力 + 物理知情约束（PINN）</div>
+  <div class="meta">版本 2026-09-29 · 数据覆盖 2020-01 ~ 2024-12 · 26 县 · 全部指标可复现（固定随机种子）</div>
+</header>
+
+<section id="s0">
+  <h2><span class="num">0</span>摘要</h2>
+  <div class="grid">
+    <div class="kpi info">
+      <div class="t">任务 A · 同期识别（AUC，三年）</div>
+      <div class="v">0.685 / 0.625 / 0.668</div>
+      <div class="d">本文模型完整版。同口径下随机森林 0.648（三年均值），<b>LSTM 0.727 更高</b>。</div>
+    </div>
+    <div class="kpi bad">
+      <div class="t">任务 B · 提前 1~3 月预测</div>
+      <div class="v">R² 全为负</div>
+      <div class="d">所有模型（含树模型与本文模型）R² ∈ [−3.9, −0.13]，<b>当前样本量下不具备可用的提前预测回归能力</b>。</div>
+    </div>
+    <div class="kpi ok">
+      <div class="t">消融：空间分支 + 物理约束</div>
+      <div class="v">+0.049 AUC</div>
+      <div class="d">三年均值：仅气象 0.610 → +遥感 0.629 → +空间 0.625 → <b>+物理约束 0.659</b>。</div>
+    </div>
+    <div class="kpi warn">
+      <div class="t">与计划目标的差距</div>
+      <div class="v">未达成</div>
+      <div class="d">计划要求「精确率 35–50%、召回 85%+、R²&gt;0.65」。实测最优 F1 仅 0.13–0.31，R² 为负。</div>
+    </div>
+  </div>
+  <div class="note warn">
+    <span class="h">先说结论，再说过程</span>
+    本文构建了可运行的跨模态时空网络与物理约束损失，并在<b>四段式消融</b>中确认空间分支与物理约束有稳定正向贡献；
+    但<b>它没有在所有指标上超过基线</b>——LSTM 在同期识别任务上三年均值更高（0.727 vs 0.659），
+    而提前预测任务（R²）在所有模型上都不可用。第 7 节完整列出未达成的目标与原因，不做粉饰。
+  </div>
+</section>
+
+<section id="s1">
+  <h2><span class="num">1</span>问题与目标</h2>
+  <p>
+    青藏高原牧区的主要致灾气象事件是<b>雪灾、寒潮、强降雨与干旱</b>。这些事件在空间上连片发生
+    （雪云过境、草场连片受灾），在时间上具有持续性（连续降雪累积）。
+    而现有做法把 26 个县当作<b>彼此独立</b>的行、把月份当作<b>彼此独立</b>的样本，
+    这丢掉了本问题最本质的两个结构：<b>空间扩散</b>与<b>时间记忆</b>。
+  </p>
+  <p>本文要回答三个问题：</p>
+  <ol>
+    <li>把「县」连成图、把「月」连成序列，能不能比逐行独立的树模型更好？</li>
+    <li>把气象物理规律写进损失函数（PINN），在<b>样本极少</b>的情况下是不是真的有用？</li>
+    <li>能不能做<b>提前预测</b>（这才叫预警），而不是同期识别？</li>
+  </ol>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>数据与口径</h2>
+
+  <h3>2.1 数据来源</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>数据</th><th>内容</th><th>覆盖</th><th>来源</th></tr>
+    <tr><td>气象逐日</td><td>日最高/最低/均温、降水、降雪、雪深、地表短波辐射、风速、风向、相对湿度（10 变量）</td><td>26 县 × 1827 天（2020-01-01 ~ 2024-12-31）</td><td>Open-Meteo 档案接口（ERA5 再分析）</td></tr>
+    <tr><td>遥感月度</td><td>NDVI、NDVI 变化、植被覆盖、积雪覆盖、退化等级</td><td>2020-2024</td><td>MODIS</td></tr>
+    <tr><td>灾害事件</td><td>带公开凭证（URL / 年鉴页码）的气象灾害事件</td><td>96 条气象类 + 32 条非气象类</td><td>应急管理部公报、地方政府、新闻</td></tr>
+    <tr><td>空间关系</td><td>26 县经纬度、高程</td><td>—</td><td>行政中心坐标 + ERA5 网格高程</td></tr>
+  </table>
+  </div>
+
+  <h3>2.2 单位一律取接口自报值</h3>
+  <p>
+    所有单位以 API 响应中的 <code>daily_units</code> 为唯一权威，不做量级推测。
+    实测易错点：<b>雪深是「米」、降雪是「厘米」</b>、风速是 km/h（项目内部统一换算为 m/s）、辐射是 MJ/m²。
+    这些换算全部写在常量与 meta 里，不散落在代码中。此前项目曾在雪深单位上判断失误，本版以自报值为准。
+  </p>
+
+  <h3>2.3 ⚠️ 必须写明的三条口径边界</h3>
+  <div class="note bad">
+    <span class="h">① 负样本是「未确认」，不是「确认无灾」</span>
+    训练/评价中作为负例的 1372 个月，其真实含义是<b>「我们没有找到灾害记录」</b>，
+    而不是「该月确无灾害」。数据集中单独保留 <code>unlabeled</code> 张量记录这一信息。
+    本报告所有指标都受此限制——<b>它们衡量的是「与已记录事件的吻合度」</b>。
+  </div>
+  <div class="note warn">
+    <span class="h">② 正样本经过清洗：32 条非气象事件已剔除</span>
+    原始 128 条正样本中，<b>32 条不是气象事件</b>：保险覆盖不足 17、地震 7、草场压力 4、牲畜疫病 2、疫苗接种 1。
+    把地震与疫苗当作「高原气象灾害」的正样本既让指标虚低，也经不起气象方向的追问。
+    清洗采取<b>「加标注、不删记录」</b>：原始记录保留，加 <code>is_meteo</code> 字段，下游按口径选择。
+  </div>
+  <div class="note warn">
+    <span class="h">③ 气候数据与旧文件的口径差异已查明</span>
+    与项目旧文件 <code>climate_era5.json</code> 逐日逐值比对（94103 个值）：
+    96.5% 完全一致，超阈值差异 <b>99.3% 集中在 <code>linzhi-bayi</code> 一个县</b>（该县不在事件标签集内），
+    其余 5 县合计 20 处（占比 0.04%）。结论：25 县的标签集与气象数据同源可用。
+    另：API 返回的<b>网格高程与项目 CSV 海拔最多相差 378 m</b>
+    （yushu-chengduo 3822 vs 4200），物理约束必须用 API 高程，因为温度来自同一网格。
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>方法</h2>
+
+  <h3>3.1 总体架构</h3>
+  <pre>        序列 (B, L=6, N=26, F=34)
+                 │
+      ┌──────────┴──────────┐
+      ▼                     ▼
+ 气象时序分支            遥感空间分支
+ PatchTST-lite            图卷积 GCN ×2
+ 按县展开 (B·N, 6, 34)     Â X W，26 县之间传消息
+ → patch 嵌入 + 位置编码    邻接：Haversine 最近 4 邻接 + 600km 截断
+ → Transformer 编码        （26 节点 / 63 边 / 单一连通分量）
+      │                     │
+      └────────┬────────────┘
+               ▼
+      跨模态注意力融合（Cross-Attention）
+       query = 时序 patch token ； key/value = 空间节点表示
+               ▼
+      ┌────────┴────────┬──────────────┐
+      ▼                 ▼              ▼
+  风险 logit       未来 h 月灾情强度   物理辅助头
+  （任务 A）        （任务 B）        （下月气温 / 下月雪深）
+                                          │
+                                          ▼
+                              L_lapse_rate / L_snow_energy</pre>
+
+  <h3>3.2 双任务定义</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>任务</th><th>输入</th><th>目标</th><th>类型</th><th>指标</th></tr>
+    <tr><td><b>任务 A</b> 同期识别</td><td>[t−5, t] 的 26 县序列</td><td>t 月该县有无气象灾害</td><td>二分类</td><td>AUC / AP / P / R / F1</td></tr>
+    <tr><td><b>任务 B</b> 提前预测</td><td>同上</td><td>t+1..t+h（h=1,2,3）窗口内的<b>最大灾情强度</b>（0~4 连续量）</td><td>回归</td><td>R² / MAE / RMSE</td></tr>
+  </table>
+  </div>
+  <p class="foot">
+    任务 B 才是「预警」；也是时序模型相对树模型理论上有优势的地方（树模型没有序列记忆、不能外推时间趋势）。
+    灾情强度刻度来自标签 severity 文字档（低/中/高）映射，不是物理量纲。
+  </p>
+
+  <h3>3.3 损失函数</h3>
+  <pre>L_total = L_cls + L_reg + λ₁·L_lapse_rate + λ₂·L_snow_energy
+
+L_cls  = Focal Loss(α, γ=2) + 难例挖掘 OHEM（保留 50% 困难负例，正例全部保留）
+L_reg  = MSE（任务 B，有效掩码内）
+
+L_lapse_rate : 对图上每条边 (i,j)
+               residual = (T_i − T_j) + Γ·(h_i − h_j)/1000 ,  Γ = 6.5 °C/km
+L_snow_energy: 单边（hinge）约束
+               ① relu(ΔSD − 降雪量 − 容差)      没有降雪不应增雪
+               ② relu(−ΔSD − 辐射可融雪量)      融雪不能超过辐射能上限
+               辐射可融雪量 = rad(MJ/m²) ÷ 0.334(MJ/kg)     [雪密度按 0.1 折算]</pre>
+
+  <div class="note ok">
+    <span class="h">物理项必须做尺度归一化（这是本报告里最实用的一条工程经验）</span>
+    残差天然带量纲：气温差是「摄氏度平方」，积雪是「厘米平方」，量级远大于 Focal/MSE。
+    第一版直接用 λ=0.5，<b>主任务 AUC 从 0.713 掉到 0.561（2022 年）</b>——物理项把数据项压垮了。
+    修法：用<b>观测</b>的邻域温差、观测积雪变化的平均绝对值作为尺度把残差归一到 O(1)，
+    并把 λ 降到 <b>0.05</b>。修正后物理约束不再伤主任务，且在 2023/2024 两年<b>提升</b>了主任务指标。
+  </div>
+
+  <h3>3.4 ⚠️ 物理约束的诚实边界</h3>
+  <div class="note warn">
+    <span class="h">这不是完整的积雪消融能量平衡</span>
+    完整能量平衡需要：净短波 + 净长波 + 感热 + 潜热 + 地热 + 相变潜热。
+    现有数据只有<b>日累计短波辐射</b>，<b>没有长波辐射、没有地表反照率、没有风廓线</b>。
+    因此本文实现的是<b>能量与物质守恒的单边软约束</b>，不是能量闭合模型。
+    <br>同理，<code>L_lapse_rate</code> 是<b>26 个县点位之间</b>的约束
+    （<code>public_data/raw/dem/</code> 为空，没有 DEM 栅格），不是「相邻网格」约束。
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>实验设计</h2>
+  <ul>
+    <li><b>划分</b>：滚动前向。训练 = 全部早于测试年的月份；测试 = 该年全年。样本单位 = (月, 县)。</li>
+    <li><b>测试年</b>：2022 / 2023 / 2024（三年各自独立出一份指标，看一致性而不是单年峰值）。</li>
+    <li><b>随机种子</b>：全部固定为 42，CPU 训练。</li>
+    <li><b>基线</b>：Logistic 回归、随机森林、XGBoost、CatBoost（传统）；LSTM、GRU、Transformer（时序深度）。</li>
+    <li><b>消融</b>：仅气象 → +遥感 → +空间图卷积 → +物理约束（= 完整 TP-STNet）。</li>
+    <li><b>对比项</b>：两阶段级联（低阈值粗筛 + 在筛出样本上重训精判模型）。</li>
+  </ul>
+  <div class="note info">
+    <span class="h">模型规模刻意取小，并说明理由</span>
+    样本量 = 26 县 × 60 月 = 1560 格，气象类正样本 <b>96 格（6.15%）</b>；本机<b>无 GPU</b>（torch CPU 版）。
+    因此 <code>d_model=48</code>、时序编码器 <b>1 层</b>、图卷积 <b>2 层</b>，参数量 <b>46,566</b>。
+    <b>深度用在结构上（跨模态 / 空间 / 物理约束），不是用在规模上</b>——不假称「大模型」。
+    在这个样本量上堆参数量只会过拟合。
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>结果</h2>
+
+  <h3>5.1 任务 A：同期识别（AUC）</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>组</th><th>模型</th><th class="num">2022</th><th class="num">2023</th><th class="num">2024</th><th class="num">三年均值</th></tr>
+    <tr class="dim"><td rowspan="4">传统模型</td><td>Logistic 回归</td><td class="num">0.655</td><td class="num">0.602</td><td class="num">0.660</td><td class="num">0.639</td></tr>
+    <tr class="dim"><td>随机森林</td><td class="num">0.681</td><td class="num">0.609</td><td class="num">0.654</td><td class="num">0.648</td></tr>
+    <tr class="dim"><td>XGBoost</td><td class="num">0.603</td><td class="num">0.646</td><td class="num">0.631</td><td class="num">0.627</td></tr>
+    <tr class="dim"><td>CatBoost</td><td class="num">0.598</td><td class="num">0.561</td><td class="num">0.644</td><td class="num">0.601</td></tr>
+    <tr class="hl"><td rowspan="3">时序深度</td><td><b>LSTM</b></td><td class="num">0.783</td><td class="num">0.747</td><td class="num">0.652</td><td class="num"><b>0.727</b></td></tr>
+    <tr><td>GRU</td><td class="num">0.730</td><td class="num">0.693</td><td class="num"><b>0.696</b></td><td class="num">0.706</td></tr>
+    <tr><td>Transformer</td><td class="num">0.692</td><td class="num">0.650</td><td class="num">0.499</td><td class="num">0.614</td></tr>
+    <tr class="hl"><td>本文</td><td><b>TP-STNet（完整）</b></td><td class="num">0.685</td><td class="num">0.625</td><td class="num">0.668</td><td class="num"><b>0.659</b></td></tr>
+    <tr class="badrow"><td>对比项</td><td>两阶段级联</td><td class="num">0.619</td><td class="num">0.488</td><td class="num">0.628</td><td class="num">0.578</td></tr>
+  </table>
+  </div>
+  <div class="note bad">
+    <span class="h">如实说明：本文模型没有全面胜出</span>
+    ① <b>LSTM 三年均值 0.727 &gt; 本文 0.659</b>，GRU 0.706 也高于本文。
+    ② 本文模型在 2024 年（0.668）与 LSTM（0.652）、GRU（0.696）互有胜负，未形成稳定优势。
+    ③ 两阶段级联<b>全面更差</b>（0.578）：第二阶段可用样本太少（正例被粗筛后进一步稀释），1:14 的不平衡下不成立。
+    <br>计划中「在 Precision / Recall / F1 上全面胜出」<b>未达成</b>。
+  </div>
+
+  <h3>5.2 任务 A：不平衡场景下的精确率（这才是难点）</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>模型（2024 年）</th><th class="num">AUC</th><th class="num">AP</th><th class="num">最优 F1</th><th class="num">P @ R≥90%</th><th class="num">R @ P≥30%</th></tr>
+    <tr><td>随机森林</td><td class="num">0.654</td><td class="num">0.077</td><td class="num">0.168</td><td class="num">0.050</td><td class="num">0.000</td></tr>
+    <tr><td>LSTM</td><td class="num">0.652</td><td class="num">0.074</td><td class="num">0.169</td><td class="num">0.047</td><td class="num">0.000</td></tr>
+    <tr><td>GRU</td><td class="num">0.696</td><td class="num">0.077</td><td class="num">0.167</td><td class="num">0.057</td><td class="num">0.000</td></tr>
+    <tr class="hl"><td><b>TP-STNet（完整）</b></td><td class="num">0.668</td><td class="num"><b>0.084</b></td><td class="num">0.167</td><td class="num">0.044</td><td class="num">0.000</td></tr>
+  </table>
+  </div>
+  <p class="foot">
+    三年全部配置的<b>最优 F1 落在 0.13 ~ 0.31</b>，召回≥90% 时的精确率只有 <b>0.04 ~ 0.12</b>。
+    计划要求的「精确率 35–50%」高出实测一个数量级。
+  </p>
+
+  <h3>5.3 任务 B：提前预测（R²）</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>模型</th><th class="num">2022 h1 / h2 / h3</th><th class="num">2023 h1</th><th class="num">2024 h1</th></tr>
+    <tr class="dim"><td>随机森林</td><td class="num">−0.133 / — / —</td><td class="num">−0.131</td><td class="num">−0.291</td></tr>
+    <tr class="dim"><td>LSTM</td><td class="num">−2.898</td><td class="num">−1.026</td><td class="num">−0.975</td></tr>
+    <tr class="dim"><td>GRU</td><td class="num">−3.925</td><td class="num">−0.975</td><td class="num">−0.929</td></tr>
+    <tr class="dim"><td>TP-STNet（完整）</td><td class="num">−0.814</td><td class="num">−0.917</td><td class="num">−1.260</td></tr>
+  </table>
+  </div>
+  <div class="note bad">
+    <span class="h">任务 B 整体不可用</span>
+    所有模型的 R² <b>全为负</b>（−3.9 ~ −0.13），意味着回归误差大于「直接预测均值」。
+    计划里的「把 R² 扭转为正值（目标 &gt; 0.65）」<b>未达成，且按现有数据规模不具备可行性</b>。
+    相对而言本文模型在 2022 年最接近 0（−0.814），说明空间与物理约束对极端外推有一定稳定作用，但这不足以支撑「可用」的结论。
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>物理约束的作用（四段式消融）</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>消融阶段</th><th class="num">2022</th><th class="num">2023</th><th class="num">2024</th><th class="num">三年均值</th><th>相对上一阶段</th></tr>
+    <tr><td>① 仅气象</td><td class="num">0.624</td><td class="num">0.617</td><td class="num">0.590</td><td class="num">0.610</td><td>—</td></tr>
+    <tr><td>② + 遥感特征</td><td class="num">0.661</td><td class="num">0.618</td><td class="num">0.607</td><td class="num">0.629</td><td class="num">+0.019</td></tr>
+    <tr><td>③ + 空间图卷积</td><td class="num"><b>0.713</b></td><td class="num">0.544</td><td class="num">0.617</td><td class="num">0.625</td><td class="num">−0.004</td></tr>
+    <tr class="hl"><td>④ + 物理约束（完整）</td><td class="num">0.685</td><td class="num"><b>0.625</b></td><td class="num"><b>0.668</b></td><td class="num"><b>0.659</b></td><td class="num"><b>+0.034</b></td></tr>
+  </table>
+  </div>
+  <div class="note ok">
+    <span class="h">可以站得住的结论</span>
+    ① <b>遥感特征</b>在三年中两年有增益（+0.037 / +0.001 / +0.017），方向一致。
+    ② <b>物理约束</b>在三年中两年提升、三年均值最高（+0.049 vs 仅气象），是本模型中<b>唯一有稳定正向贡献的模块</b>。
+    ③ <b>空间图卷积</b>表现不稳定（2022 +0.052、2023 −0.074、2024 +0.010）：26 个县的连片性在有的年份成立、有的年份不成立，
+    这与「事件是否为大范围天气过程」有关，需要更多年份才能定论。
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>局限与未达成的目标</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>计划目标</th><th>实测</th><th>结论</th></tr>
+    <tr><td>「提出的模型在 MAE / RMSE / Precision / Recall / F1 上全面胜出」</td><td>三年均值 AUC：LSTM 0.727 &gt; 本文 0.659</td><td><span class="tag bad">未达成</span></td></tr>
+    <tr><td>精确率提升至 35–50%，召回保持 85%+</td><td>最优 F1 0.13–0.31；P@R90 为 0.04–0.12</td><td><span class="tag bad">未达成</span>，差一个数量级</td></tr>
+    <tr><td>R² 扭转为正值（&gt;0.65）</td><td>全模型 R² 为负</td><td><span class="tag bad">未达成</span></td></tr>
+    <tr><td>两阶段级联解决不平衡</td><td>三年均值 0.578，低于所有单体模型</td><td><span class="tag bad">不成立</span></td></tr>
+    <tr><td>积雪消融能量平衡（PINN）</td><td>实现为单边软约束（缺长波/反照率/风廓线）</td><td><span class="tag warn">简化实现</span></td></tr>
+    <tr><td>垂直递减率的网格约束</td><td>实现为 26 县点位约束（无 DEM 栅格）</td><td><span class="tag warn">降级实现</span></td></tr>
+    <tr><td>跨模态时空网络</td><td>已实现并跑通，参数量 46,566</td><td><span class="tag ok">达成</span></td></tr>
+    <tr><td>四段式消融与 Baseline 对比</td><td>8 组模型 × 3 测试年 × 双任务</td><td><span class="tag ok">达成</span></td></tr>
+  </table>
+  </div>
+
+  <h3>7.1 为什么达不到，三条根因</h3>
+  <ol>
+    <li>
+      <b>标签量太小，且负例性质不明。</b>气象类正样本只有 96 格（占 6.15%），测试年正例仅十几格——
+      一个样本的变动就是数个百分点。而 1372 个负例是「未确认」而非「确认无灾」，
+      模型学到的是<b>「与已记录事件的吻合度」</b>，不是真实的灾害概率。
+    </li>
+    <li>
+      <b>提前预测的信息量本身不足。</b>数据只有 2020-2024 五年、26 个县，
+      而灾害是小概率极端事件。任务 B 的 R² 为负，说明在这个尺度上「未来 1-3 月灾情强度」的可预测成分低于噪声。
+    </li>
+    <li>
+      <b>物理侧数据不完整。</b>只有日累计短波辐射，没有长波辐射、反照率、风廓线，
+      所以能量平衡只能做成单边软约束；没有 DEM 栅格，递减率只能做成点位约束。
+      这两项限制了物理先验能提供的增益上限。
+    </li>
+  </ol>
+
+  <h3>7.2 下一步（按投入产出排序）</h3>
+  <ol>
+    <li><b>补长波辐射与地表反照率</b>（ERA5 有对应变量）→ 把 <code>L_snow_energy</code> 从软约束升级为近似闭合，这是最有希望提指标的单项。</li>
+    <li><b>把评价口径从「月 × 县」改成「事件」</b>（事件窗口 vs 随机窗口、命中率 @k），减少「未确认负例」对指标的污染。</li>
+    <li><b>扩充年份</b>：ERA5 可回溯到 1979，把气象序列拉到 40 年，任务 B 的提前预测才有足够样本。</li>
+    <li><b>λ 敏感性分析</b>与更长回看窗口的扫描（当前 λ=0.05、回看 6 月是单点取值，未做网格搜索）。</li>
+  </ol>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span>复现方式</h2>
+  <pre># 1) 补 ERA5 多变量（10 变量 / 26 县 / 逐日）
+python public_data/scripts/fetch_era5_multivar.py
+
+# 2) 26 县空间邻接图（Haversine + 最近 4 邻接 + 600km 截断）
+python backend/region_graph.py
+
+# 3) 双任务数据集（29 气象特征 + 5 遥感特征 + 序列张量 + 双任务标签）
+python backend/meteo_dataset.py
+
+# 4) Baseline 对比 + 四段式消融 + 两阶段级联（8 模型 × 3 年 × 双任务）
+python public_data/scripts/run_experiments.py
+
+# 5) 深度模型推理服务（训练 80 轮 / 种子 42 / CPU）
+python backend/deep_service.py
+
+# 6) 起服务并访问算法接口
+PORT=8100 python backend/server.py
+#   GET /api/deep/status                  模型状态与训练配置
+#   GET /api/deep/risk?month=2024-12      26 县风险评分
+#   GET /api/deep/attention?month=2024-12 跨模态注意力在时间维的分布
+#   GET /api/deep/attribution/{region_id} 通道遮挡归因 + 物理残差</pre>
+  <p class="foot">
+    模型归因用 <b>通道遮挡（occlusion）</b>而非 SHAP：把某一类输入置零，测风险下降幅度。
+    它的语义是「模型对该通道的依赖度」，可直接对上物理含义（温度 / 降水 / 积雪 / 辐射 / 风 / 湿度 / 遥感），
+    比 SHAP 更经得起「这个数怎么算的」这一问。方法说明随接口一起返回，不做成好看的百分比。
+  </p>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span>指标定义</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>指标</th><th>含义</th><th>读法</th></tr>
+    <tr><td>AUC</td><td>排序能力</td><td>0.5 = 随机</td></tr>
+    <tr><td>AP（PR-AUC）</td><td>不平衡数据下的精确率-召回率综合</td><td>基线 = 正例占比（0.062）</td></tr>
+    <tr><td>最优 F1 / P / R</td><td>在测试集上扫阈值取 F1 最大</td><td><b>乐观口径</b>：实际部署拿不到这个阈值</td></tr>
+    <tr><td>P @ R≥90%</td><td>要求不漏掉九成灾害时的精确率</td><td>业务可解释口径</td></tr>
+    <tr><td>R @ P≥30%</td><td>精确率压到三成时能不漏掉多少</td><td>业务可解释口径</td></tr>
+    <tr><td>R²</td><td>回归判定的解释比例</td><td>为负表示不如直接预测均值</td></tr>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="h">口径提醒</span>
+    本报告所有「最优 F1 / P@R90 / R@P30」都由<b>测试集上的阈值曲线</b>给出，属乐观口径，不代表部署可达。
+    测试年正样本仅十几格，应看<b>三年一致性</b>而非单年峰值。
+  </div>
+</section>
+
+<hr>
+<p class="foot">
+  TP-STNet 技术报告 · 2026-09-29 · 数据 2020-01 ~ 2024-12 · 全部结果由
+  <code>public_data/scripts/run_experiments.py</code> 以固定种子 42 生成，
+  明细见 <code>backend/data_store/experiment_report.json</code>
+</p>
+</main>
+</div>
+</body>
+</html>

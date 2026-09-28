@@ -138,6 +138,7 @@ ADMIN_PAGES = {
     "roadmap.html",
     "admin.html",
     "bank.html",
+    "meteo.html",   # 气象可视化页（消费 /api/deep/*）
 }
 
 # ---------------------------------------------------------------------------
@@ -2087,6 +2088,14 @@ def create_app() -> FastAPI:
     # ======================================================================
     # 404 兜底
     # ======================================================================
+
+    # 深度模型路由：必须注册在 /api 兜底路由之前，
+    # 否则 @app.api_route("/api/{path:path}") 会先命中并直接返回 404（实测踩过）。
+    try:
+        from deep_api import register_deep_routes
+        register_deep_routes(app)
+    except Exception as exc:  # 深度模块缺失不应导致整个服务起不来
+        print(f"[deep] 路由未注册: {exc}")
 
     @app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     def api_not_found(path: str) -> None:
