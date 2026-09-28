@@ -1,5 +1,5 @@
 /* ==========================================================================
-   工银牧融 · 银行版控制台（/bank）
+   融天气象 · 机构版控制台（/bank）
    --------------------------------------------------------------------------
    数据全部来自 /api/bank/*（backend/bank_view.py 聚合）。
    页面结构遵循 L1 结论 / L2 动作 / L3 折叠依据三层，页面上不写解释性文字。
@@ -58,33 +58,33 @@
         page: 'dashboard',
         tab: 'ov',
         navGroups: [
-          { title: '获客与授信', items: [
-            { page: 'dashboard', name: '工作台' },
-            { page: 'pool', name: '客户池' },
-            { page: 'profile', name: '客户档案' }
+          { title: '监测与预警', items: [
+            { page: 'dashboard', name: '预警工作台' },
+            { page: 'pool', name: '监测对象' },
+            { page: 'profile', name: '对象档案' }
           ]},
-          { title: '资产与风控', items: [
-            { page: 'ledger', name: '活体资产台账' },
-            { page: 'postloan', name: '贷后待办' },
-            { page: 'region', name: '区域与集中度' }
+          { title: '暴露与风险', items: [
+            { page: 'ledger', name: '暴露资产台账' },
+            { page: 'postloan', name: '灾后核查' },
+            { page: 'region', name: '区域与暴露度' }
           ]},
           { title: '协同', items: [
-            { page: 'insurance', name: '保险协同' }
+            { page: 'insurance', name: '保险联动' }
           ]}
         ],
         tabs: [
           { key: 'ov', name: '概览' }, { key: 'doc', name: '资料' },
-          { key: 'asset', name: '资产' }, { key: 'credit', name: '授信' },
-          { key: 'pl', name: '贷后' }, { key: 'ev', name: '依据' }
+          { key: 'asset', name: '资产' }, { key: 'credit', name: '敞口' },
+          { key: 'pl', name: '灾后' }, { key: 'ev', name: '依据' }
         ],
-        crumb: '工作台',
+        crumb: '预警工作台',
         error: '',
         ov: {}, pool: { customers: [], sources: [] },
         profile: {}, docs: { items: [], groups: [], summary: {} },
         currentName: '',
         led: {}, post: { queue: [], by_level: {} }, ins: { queue: [], claims: [], discount_tiers: [] },
         reg: { rows: [] },
-        /* 操作留痕（银行版控制台按钮落库） */
+        /* 操作留痕（机构版控制台按钮落库） */
         tasks: { tasks: [], count: 0, summary: {} },
         taskForm: {
           open: false, action: '', subject_name: '', detail: '', owner: '',
@@ -109,9 +109,9 @@
     },
 
     mounted: function () {
-      this.crumb = '工作台';
+      this.crumb = '预警工作台';
       var self = this;
-      // 首屏只加载工作台需要的两块数据
+      // 首屏只加载预警工作台需要的两块数据
       Promise.all([this.loadOverview(), this.loadPostLoan(), this.loadPool(), this.loadTasks()])
         .catch(function (e) { self.error = String(e.message || e); });
     },
@@ -133,7 +133,7 @@
         if (p === 'pool') { this.loadPool(); }
         if (p === 'profile') { this.enterProfile(); }
       },
-      /** 进入客户档案：保证有当前客户且数据已加载（从侧栏直接进来时也要有数据）。 */
+      /** 进入对象档案：保证有当前客户且数据已加载（从侧栏直接进来时也要有数据）。 */
       enterProfile: function () {
         var self = this;
         var go = function () {
@@ -194,7 +194,7 @@
         this.currentName = name;
         this.page = 'profile';
         this.tab = 'ov';
-        this.crumb = '客户档案';
+        this.crumb = '对象档案';
         window.scrollTo(0, 0);
         this.loadProfile();
       },
@@ -315,14 +315,14 @@
       },
 
       /* ---------------- 测算结论 ----------------
-         建议金额只来自额度链测算（profile.estimate）；无案例的户一律不显示金额，
-         不得用行内已有授信额度（profile.finance.credit_line）顶替。      */
+         预警额度只来自测算链测算（profile.estimate）；无案例的户一律不显示金额，
+         不得用系统内存量敞口（profile.finance.credit_line）顶替。      */
       estLabel: function () {
         var e = this.profile.estimate || {};
         if (e.state !== 'ok') { return '—'; }
         if (e.status === 'feasible') { return '可测算 · 已出金额'; }
         if (e.status === 'blocked') { return '资料不足 · 不进入测算'; }
-        if (e.status === 'infeasible') { return '测算未通过 · 暂不放款'; }
+        if (e.status === 'infeasible') { return '测算未通过 · 暂不纳入'; }
         return e.status || '—';
       },
       estCls: function () {
@@ -337,7 +337,7 @@
         if (e.state === 'ok') {
           if (e.status === 'feasible') { return '可贷'; }
           if (e.status === 'blocked') { return '资料不足 · 不进入测算'; }
-          if (e.status === 'infeasible') { return '测算未通过 · 暂不放款'; }
+          if (e.status === 'infeasible') { return '测算未通过 · 暂不纳入'; }
         }
         return (this.profile.conclusion || {}).headline || '';
       },
@@ -353,10 +353,10 @@
         var base = (this.profile.conclusion || {}).note || '';
         if (e.state === 'ok') { return e.reason || base; }
         if (e.state === 'no_case') {
-          return '该户尚未建立测算案例，本次不给出建议金额 —— 建议金额只能由唯一额度链'
+          return '该户尚未建立测算案例，本次不给出预警额度 —— 预警额度只能由唯一测算链'
             + '（必要饲草采购缺口 vs 供给侧四项取小）算出，需先补齐该户的经营与采购资料。';
         }
-        return '测算案例数据不可用，当前无法给出建议金额。';
+        return '测算案例数据不可用，当前无法给出预警额度。';
       },
       pctCls: function (p) {
         p = Number(p) || 0;
@@ -380,10 +380,10 @@
       },
       sourceHint: function (s) {
         var map = {
-          '政府数据匹配': '在保险台账的登记主体里出现过，行内无授信记录',
+          '政府数据匹配': '在保险台账的登记主体里出现过，行内无敞口记录',
           '产业链反推': '在产业链交易记录里出现过，可从核心企业交易反推',
-          '存量客户转介': '行内已有授信记录的存量客户',
-          '自助测额度留资': '客户端自助测算后留下联系方式'
+          '存量客户转介': '系统内存量业务记录的存量客户',
+          '自助测算留资': '客户端自助测算后留下联系方式'
         };
         return map[s] || '—';
       }

@@ -2,17 +2,17 @@
 工银牧融 - 银行视角聚合视图
 ============================================================================
 职责：
-  把 data_store 里已有的主体 / 授信 / 贷后任务 / 保险台账数据，组织成银行信贷视角
-  的页面数据：客户池、单户档案、一户一档资料、活体资产台账、贷后待办、保险协同、
+  把 data_store 里已有的主体 / 授信 / 灾后任务 / 保险台账数据，组织成气象灾害风险视角
+  的页面数据：客户池、单户档案、一户一档资料、活体资产台账、灾后待办、保险协同、
   区域集中度。
 
 边界：
   - 只读，不写文件、不处理 HTTP。
   - 不做真随机：所有派生量由名称的 md5 稳定派生，相同输入必得相同输出（便于测试与复算）。
   - **样例层与真实层分开标注**：
-      * 主体、授信、贷后任务、耳标登记 = 来自 data_store 的真实结构数据（其中主体/授信
+      * 主体、授信、灾后任务、耳标登记 = 来自 data_store 的真实结构数据（其中主体/授信
         本身在源文件里已标 is_sample，原样透传）；
-      * 「无票出栏」「贷后信号」「保单核验队列」在源数据里没有对应表，由派生层生成，
+      * 「无票出栏」「灾后信号」「保单核验队列」在源数据里没有对应表，由派生层生成，
         一律带 is_derived=True 与 derived_note，不冒充真实业务数据。
   - 敏感字段（姓名全称、电话、证件号）不出现在任何输出里。
 
@@ -34,7 +34,14 @@ _STORE_DIR = _BACKEND_DIR / "data_store"
 _POLICY_PATH = _STORE_DIR / "insurance_policies.json"
 
 # 信号分类（与方案 10.6 的五类一致）
-SIGNAL_CLASSES = ("资产类", "健康类", "经营类", "环境类", "还款类", "保险类")
+# 准入阶段的数据值 -> 页面措辞（数据源 business_subjects.json 不改）
+STAGE_DISPLAY = {
+    "存量贷后": "存量监测",
+    "准入监测": "常态监测",
+    "人工复核": "人工复核",
+}
+
+SIGNAL_CLASSES = ("资产类", "健康类", "经营类", "环境类", "履约类", "保险类")
 
 # 获客来源
 SOURCE_GOV = "政府数据匹配"
@@ -72,16 +79,16 @@ DOC_TEMPLATE: list[tuple[str, str, str, str, bool]] = [
     ("policy", "保单", "保险资料", "保险公司", False),
     ("coverage", "保险覆盖率", "保险资料", "保险公司", True),
     ("claim", "理赔记录", "保险资料", "保险公司", False),
-    # 授信资料（6）
-    ("credit_line", "授信额度", "授信资料", "行内", False),
-    ("used_credit", "已用额度", "授信资料", "行内", False),
-    ("repayment", "还款状态", "授信资料", "行内", False),
-    ("overdue", "逾期次数", "授信资料", "行内", False),
-    ("guarantee", "担保方式", "授信资料", "行内", False),
-    ("unified_total", "统一授信额度", "授信资料", "行内", False),
+    # 敞口资料（6）
+    ("credit_line", "风险敞口额度", "敞口资料", "行内", False),
+    ("used_credit", "已用敞口", "敞口资料", "行内", False),
+    ("repayment", "履约状态", "敞口资料", "行内", False),
+    ("overdue", "逾期次数", "敞口资料", "行内", False),
+    ("guarantee", "担保方式", "敞口资料", "行内", False),
+    ("unified_total", "可用敞口额度", "敞口资料", "行内", False),
 ]
 
-DOC_GROUPS = ["主体资料", "资产资料", "防疫资料", "经营资料", "保险资料", "授信资料"]
+DOC_GROUPS = ["主体资料", "资产资料", "防疫资料", "经营资料", "保险资料", "敞口资料"]
 
 
 # --------------------------------------------------------------------------
@@ -231,7 +238,7 @@ def _derive_ledger(subject: dict[str, Any], ctx: dict[str, Any]) -> dict[str, An
 
 def _derive_signals(subject: dict[str, Any], fin: dict[str, Any] | None,
                     ledger: dict[str, Any], claims: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """贷后信号（派生层）。至少有一项来自真实字段（逾期 / 用信率）。"""
+    """灾后信号（派生层）。至少有一项来自真实字段（逾期 / 用信率）。"""
     name = subject.get("name", "")
     out: list[dict[str, Any]] = []
 
@@ -242,7 +249,7 @@ def _derive_signals(subject: dict[str, Any], fin: dict[str, Any] | None,
 
     if overdue > 0:
         out.append({
-            "signal_class": "还款类",
+            "signal_class": "履约类",
             "trigger": f"逾期 {overdue} 期",
             # 逾期 1 期按「中」，≥2 期才按「高」（贴近五级分类的处理惯例，
             # 避免把每一笔逾期都标成高优先级，队列失去焦点）
@@ -251,7 +258,7 @@ def _derive_signals(subject: dict[str, Any], fin: dict[str, Any] | None,
         })
     if line and usage >= 0.9:
         out.append({
-            "signal_class": "还款类",
+            "signal_class": "履约类",
             "trigger": f"用信率 {round(usage * 100)}% ≥ 90%",
             "level": "中", "status": "待处理",
             "source": "real_field",
@@ -458,7 +465,7 @@ def credit_estimate(name: str) -> dict[str, Any]:
       - no_case     : 该户没有测算案例（银行版 76 户里目前只有 2 户有）；
       - unavailable : 案例文件缺失或损坏 —— 与 no_case 分开报，避免「数据坏了」看起来像「没案例」。
 
-    **不得用行内已有授信额度（credit_line）顶替建议金额。**
+    **不得用行内已有风险敞口额度（credit_line）顶替建议金额。**
     """
     cases = _load_cases()
     if not cases:
@@ -473,11 +480,11 @@ def credit_estimate(name: str) -> dict[str, Any]:
 
 def _conclusion(subject: dict[str, Any], fin: dict[str, Any] | None,
                 ledger: dict[str, Any], docs: dict[str, Any]) -> dict[str, Any]:
-    """准入结论（L1）。判定顺序：无授信资料 -> 待补资料；有逾期或高无票出栏 -> 待核查；否则可测算。
+    """准入结论（L1）。判定顺序：无敞口资料 -> 待补资料；有逾期或高无票出栏 -> 待核查；否则可测算。
 
     只给准入结论，**不给金额**：建议金额一律由唯一额度链给出
     （credit_decision.evaluate_credit_case，见 credit_estimate），
-    不得拿行内已有授信额度回显顶替。
+    不得拿行内已有风险敞口额度回显顶替。
     """
     fin = fin or {}
     has_credit = bool(fin.get("credit_line"))
@@ -577,7 +584,7 @@ def customer_profile(name: str) -> dict[str, Any]:
 def customer_pool() -> dict[str, Any]:
     """客户池：客户列表 + 获客来源分布。
 
-    行内 `credit_line_yuan` 是**已有授信额度**（万元 x 10000），不是额度链算出的建议金额；
+    行内 `credit_line_yuan` 是**已有风险敞口额度**（万元 x 10000），不是额度链算出的建议金额；
     建议金额看每行的 `estimate` —— 无测算案例的户为 no_case，一律不显示金额。
     """
     ctx = _load_all()
@@ -605,7 +612,10 @@ def customer_pool() -> dict[str, Any]:
             "region_name": s.get("region_name"),
             "book_head": ledger["book_head"],
             "grassland_mu": s.get("grassland_mu"),
-            "admission_stage": s.get("admission_stage"),
+            # 准入阶段来自 business_subjects.json 的数据值（如「存量贷后」），
+            # 在展示层做一次口径映射：数据源不动，页面措辞改为监测口径。
+            "admission_stage": STAGE_DISPLAY.get(
+                str(s.get("admission_stage") or ""), s.get("admission_stage")),
             "conclusion_status": conclusion["status"],
             "conclusion_tone": conclusion["tone"],
             "conclusion_headline": conclusion["headline"],
@@ -667,7 +677,7 @@ def ledger_board() -> dict[str, Any]:
 
 
 def post_loan_board() -> dict[str, Any]:
-    """贷后待办：真实任务表 + 派生信号合并成队列。"""
+    """灾后待办：真实任务表 + 派生信号合并成队列。"""
     ctx = _load_all()
     queue: list[dict[str, Any]] = []
 
@@ -699,7 +709,7 @@ def post_loan_board() -> dict[str, Any]:
                 "task_id": None,
                 "subject_name": name,
                 "region_name": s.get("region_name"),
-                "stage": "贷后核查",
+                "stage": "灾后核查",
                 "signal_class": sig["signal_class"],
                 "trigger": sig["trigger"],
                 "level": sig["level"],

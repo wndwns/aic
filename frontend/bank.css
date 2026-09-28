@@ -1,5 +1,5 @@
 /* ==========================================================================
-   工银牧融 · 银行版控制台样式（/bank）
+   融天气象 · 高原气象灾害预警控制台样式（/bank）
    --------------------------------------------------------------------------
    三层结构（方案 9.5）：
      L1 结论  -> .verdict / 顶部大字
@@ -11,7 +11,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --red: #C7000B; --red-bg: #FFF5F4; --red-line: #FFCCC7; --red-soft: #FFE8E5;
+  --accent: #0B63C7; --accent-bg: #EEF5FF; --accent-line: #CFE2FA; --accent-soft: #E3EEFC;
   --ink: #1A1D21; --ink2: #4A5158; --ink3: #8A9099;
   --line: #E6E8EB; --line2: #F0F2F4; --bg: #F7F8FA; --card: #FFFFFF;
   --ok: #12885A; --ok-bg: #EAF7F1;
@@ -37,7 +37,7 @@ body {
 }
 .brand { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
 .brand h1 { font-size: 16px; font-weight: 700; letter-spacing: .5px; }
-.brand h1 span { color: var(--red); }
+.brand h1 span { color: var(--accent); }
 .brand p { font-size: 11px; color: var(--ink3); margin-top: 2px; line-height: 1.5; }
 .nav { padding: 8px 0 24px; flex: 1; }
 .nav-group-t { font-size: 11px; color: var(--ink3); padding: 14px 20px 6px; letter-spacing: 1px; }
@@ -47,12 +47,12 @@ body {
   font-size: 14px;
 }
 .nav-item:hover { background: #FAFAFA; }
-.nav-item.active { background: var(--red-bg); border-left-color: var(--red); color: var(--red); font-weight: 600; }
+.nav-item.active { background: var(--accent-bg); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
 .nav-item .cnt { font-size: 11px; color: var(--ink3); font-weight: 400; }
-.nav-item.active .cnt { color: var(--red); }
+.nav-item.active .cnt { color: var(--accent); }
 .nav-foot { padding: 12px 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink3); }
 .nav-foot a { color: var(--ink2); text-decoration: none; }
-.nav-foot a:hover { color: var(--red); }
+.nav-foot a:hover { color: var(--accent); }
 
 /* ---------------- 主区 ---------------- */
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -75,7 +75,7 @@ body {
 
 /* ---------------- L1 结论 ---------------- */
 .verdict {
-  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--red);
+  background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent);
   border-radius: 8px; padding: 20px 24px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
 }
@@ -100,11 +100,11 @@ body {
   white-space: nowrap; user-select: none;
 }
 .btn:hover { border-color: #C9CDD4; }
-.btn-main { background: var(--red); border-color: var(--red); color: #fff; font-weight: 500; }
+.btn-main { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
 .btn-main:hover { background: #A80009; }
 .btn-sm { padding: 3px 10px; font-size: 12px; }
-.btn-ghost { color: var(--red); border-color: var(--red-line); }
-.btn-ghost:hover { background: var(--red-bg); }
+.btn-ghost { color: var(--accent); border-color: var(--accent-line); }
+.btn-ghost:hover { background: var(--accent-bg); }
 
 /* ---------------- 表格 ---------------- */
 .tw { overflow-x: auto; }
@@ -121,7 +121,7 @@ tbody tr:hover td { background: #FBFCFD; }
 tr.grp td { background: #FAFBFC; font-size: 12px; color: var(--ink3); font-weight: 600; padding: 7px 12px; letter-spacing: .5px; }
 .num { font-variant-numeric: tabular-nums; }
 .r { text-align: right; }
-.linkish { color: var(--red); cursor: pointer; }
+.linkish { color: var(--accent); cursor: pointer; }
 .linkish:hover { text-decoration: underline; }
 
 /* ---------------- 徽标 ---------------- */
@@ -152,7 +152,7 @@ details.fold .fold-body code { font-family: Consolas, Monaco, monospace; font-si
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
 }
 .tab:hover { color: var(--ink); }
-.tab.on { color: var(--red); border-bottom-color: var(--red); font-weight: 600; }
+.tab.on { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
 /* ---------------- 客户切换器 ---------------- */
 .custbar {
@@ -166,7 +166,7 @@ details.fold .fold-body code { font-family: Consolas, Monaco, monospace; font-si
   border: 1px solid var(--line); border-radius: 6px; background: #fff;
   min-width: 260px; max-width: 420px; cursor: pointer; outline: none;
 }
-.custbar select:focus { border-color: var(--red); }
+.custbar select:focus { border-color: var(--accent); }
 .custbar .cb-meta { font-size: 12px; color: var(--ink3); margin-left: auto; }
 .custbar .cb-meta b { color: var(--ink2); font-weight: 500; }
 .custbar .cb-nav {
@@ -174,7 +174,7 @@ details.fold .fold-body code { font-family: Consolas, Monaco, monospace; font-si
   border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
   color: var(--ink2); font-size: 14px; user-select: none;
 }
-.custbar .cb-nav:hover { border-color: var(--red); color: var(--red); }
+.custbar .cb-nav:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---------------- 栅格 ---------------- */
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -183,7 +183,7 @@ details.fold .fold-body code { font-family: Consolas, Monaco, monospace; font-si
 
 /* ---------------- 进度条 ---------------- */
 .bar { height: 6px; background: #F2F3F5; border-radius: 3px; overflow: hidden; min-width: 70px; }
-.bar i { display: block; height: 100%; background: var(--red); border-radius: 3px; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
 
 .muted { color: var(--ink3); font-size: 12px; }
 .mono { font-family: Consolas, Monaco, monospace; font-size: 12.5px; }

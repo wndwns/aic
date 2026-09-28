@@ -11,13 +11,13 @@
 
 覆盖：
   - 8 个 /api/bank/* 端点：状态码与关键结构
-  - 建议金额来源：必须来自唯一额度链，不得回显行内授信额度（见 2026-09-25 口径待办）
+  - 建议金额来源：必须来自唯一额度链，不得回显行内风险敞口额度（见 2026-09-25 口径待办）
   - 未知客户 -> 404
   - 单户档案：切换客户后内容确实不同（不是假按钮）
   - 一户一档：28 项 / 6 组，状态取值合法
   - 派生数据必须带 is_derived 与 derived_note，不得冒充真实数据
   - 不输出敏感字段（电话、证件号、地址）
-  - 贷后队列按优先级排序，等级取值合法
+  - 灾后队列按优先级排序，等级取值合法
 """
 
 from __future__ import annotations
@@ -81,15 +81,15 @@ def test_customer_pool_sorted_and_complete() -> None:
     assert pool["total"] == len(pool["customers"])
     srcs = {s["source"] for s in pool["sources"]}
     assert srcs, "获客来源不能为空"
-    # 按行内已有授信额度降序（不是建议金额——建议金额只有部分户有）
+    # 按行内已有风险敞口额度降序（不是建议金额——建议金额只有部分户有）
     amounts = [c["credit_line_yuan"] for c in pool["customers"]]
-    assert amounts == sorted(amounts, reverse=True), "客户池应按已有授信额度降序"
+    assert amounts == sorted(amounts, reverse=True), "客户池应按已有风险敞口额度降序"
     for c in pool["customers"]:
         assert 0 <= c["completeness"] <= 100
 
 
 def test_amount_comes_from_credit_chain_not_credit_line() -> None:
-    """「建议金额」必须来自唯一额度链，不得用行内已有授信额度回显顶替。
+    """「建议金额」必须来自唯一额度链，不得用行内已有风险敞口额度回显顶替。
 
     背景：2026-09-25 定位到 bank_view._conclusion() 曾以
     ``int(finance.credit_line * 10000)`` 当建议金额输出，界面在客户档案 L1 标成
@@ -98,7 +98,7 @@ def test_amount_comes_from_credit_chain_not_credit_line() -> None:
     """
     pool = _get("/api/bank/customer-pool")
 
-    # 1) 列表里不再有冒充建议金额的顶层 amount_yuan；授信额度单列且语义明确
+    # 1) 列表里不再有冒充建议金额的顶层 amount_yuan；风险敞口额度单列且语义明确
     for c in pool["customers"]:
         assert "amount_yuan" not in c, f"{c['subject_name']} 仍在顶层输出 amount_yuan"
         assert "credit_line_yuan" in c, f"{c['subject_name']} 缺 credit_line_yuan"
@@ -113,13 +113,13 @@ def test_amount_comes_from_credit_chain_not_credit_line() -> None:
                 f"{c['subject_name']} 状态 {est['state']}/{est.get('status')} 却给了金额"
             )
 
-    # 3) 黄金案例户：金额来自额度链，且不等于授信额度回显
+    # 3) 黄金案例户：金额来自额度链，且不等于风险敞口额度回显
     prof = _get("/api/bank/customer/班戈县绿色牧业合作社")
     est = prof["estimate"]
     assert est["state"] == "ok", "班戈户应有测算案例"
     assert est["amount_yuan"] == 900000, f"黄金案例建议金额应保持 900000，实为 {est['amount_yuan']}"
     credit_line_yuan = int(float(prof["finance"]["credit_line"]) * 10000)
-    assert est["amount_yuan"] != credit_line_yuan, "建议金额不得等于行内授信额度回显"
+    assert est["amount_yuan"] != credit_line_yuan, "建议金额不得等于行内风险敞口额度回显"
     assert est["bottleneck"]["final"] == "qualified_demand", "黄金案例最终瓶颈应是需求侧"
 
 
@@ -242,7 +242,7 @@ def test_documents_28_items_6_groups() -> None:
     d = _client.get(f"/api/bank/customer/{name}/documents").json()
     assert d["found"] is True
     assert len(d["items"]) == 28, f"资料项应为 28，实际 {len(d['items'])}"
-    assert d["groups"] == ["主体资料", "资产资料", "防疫资料", "经营资料", "保险资料", "授信资料"]
+    assert d["groups"] == ["主体资料", "资产资料", "防疫资料", "经营资料", "保险资料", "敞口资料"]
     groups_in_items = {i["group"] for i in d["items"]}
     assert groups_in_items == set(d["groups"])
 
@@ -262,7 +262,7 @@ def test_documents_marked_derived() -> None:
     assert d["derived_note"], "派生资料必须给出 derived_note"
 
 
-# --------------------------------------------------------------- 台账 / 贷后
+# --------------------------------------------------------------- 台账 / 灾后
 
 def test_ledger_board_shape() -> None:
     led = _get("/api/bank/ledger")
@@ -281,7 +281,7 @@ def test_post_loan_board_sorted_and_legal_levels() -> None:
     assert post["total"] == len(post["queue"])
     order = {"高": 0, "中": 1, "低": 2}
     levels = [order[r["level"]] for r in post["queue"]]
-    assert levels == sorted(levels), "贷后队列应按优先级降序"
+    assert levels == sorted(levels), "灾后队列应按优先级降序"
     legal = set(post["signal_classes"])
     for r in post["queue"]:
         assert r["level"] in ("高", "中", "低"), r
