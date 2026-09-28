@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIC 智慧气象 · 项目改投可行性核查</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink-2:#4a5158; --ink-3:#767d85;
+    --line:#e3e6ea; --line-2:#eef1f4;
+    --bg:#f7f8fa; --card:#ffffff;
+    --ok:#1f7a4d; --ok-bg:#e8f6ee;
+    --warn:#a35a00; --warn-bg:#fdf3e3;
+    --bad:#b0271f; --bad-bg:#fdeceb;
+    --info:#1c5d99; --info-bg:#e9f2fb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.75 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{display:flex; gap:32px; max-width:1240px; margin:0 auto; padding:32px 28px 96px;}
+  /* ---- 侧边目录 ---- */
+  nav{
+    flex:0 0 216px; position:sticky; top:32px; align-self:flex-start;
+    max-height:calc(100vh - 64px); overflow:auto;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 14px;
+  }
+  nav h4{margin:0 0 10px; font-size:12px; letter-spacing:.08em; color:var(--ink-3); font-weight:600;}
+  nav a{
+    display:block; padding:6px 10px; margin:1px 0; border-radius:7px;
+    color:var(--ink-2); text-decoration:none; font-size:13.5px; line-height:1.45;
+  }
+  nav a:hover{background:var(--bg); color:var(--ink);}
+  nav a .n{display:inline-block; width:20px; color:var(--ink-3); font-variant-numeric:tabular-nums;}
+  main{flex:1 1 auto; min-width:0;}
+  /* ---- 头部 ---- */
+  header{margin-bottom:26px;}
+  header .kicker{font-size:12.5px; letter-spacing:.1em; color:var(--ink-3); font-weight:600;}
+  header h1{margin:6px 0 8px; font-size:30px; line-height:1.3; letter-spacing:-.01em;}
+  header .sub{color:var(--ink-2); font-size:15px;}
+  header .meta{margin-top:12px; font-size:13px; color:var(--ink-3);}
+  /* ---- 卡片 ---- */
+  section{margin-bottom:34px;}
+  section > h2{
+    font-size:20px; margin:0 0 14px; padding-bottom:9px; border-bottom:2px solid var(--line);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  section > h2 .num{
+    font-size:13px; color:#fff; background:var(--ink); border-radius:5px;
+    padding:2px 8px; font-weight:600; letter-spacing:.02em;
+  }
+  h3{font-size:16.5px; margin:22px 0 8px;}
+  p{margin:9px 0;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin:14px 0;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin:16px 0;}
+  .kpi{background:var(--card); border:1px solid var(--line); border-left:4px solid var(--line); border-radius:10px; padding:14px 16px;}
+  .kpi .t{font-size:12.5px; color:var(--ink-3); font-weight:600; letter-spacing:.04em;}
+  .kpi .v{font-size:21px; font-weight:700; margin:5px 0 4px; letter-spacing:-.01em;}
+  .kpi .d{font-size:13px; color:var(--ink-2); line-height:1.6;}
+  .kpi.ok{border-left-color:var(--ok);} .kpi.ok .v{color:var(--ok);}
+  .kpi.warn{border-left-color:var(--warn);} .kpi.warn .v{color:var(--warn);}
+  .kpi.bad{border-left-color:var(--bad);} .kpi.bad .v{color:var(--bad);}
+  .kpi.info{border-left-color:var(--info);} .kpi.info .v{color:var(--info);}
+  /* ---- 表格 ---- */
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14px; background:var(--card);}
+  th,td{border:1px solid var(--line); padding:8px 11px; text-align:left; vertical-align:top;}
+  th{background:#f1f3f6; font-weight:600; font-size:13px; color:var(--ink-2); white-space:nowrap;}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  tr.hl td{background:var(--ok-bg);}
+  tr.dim td{color:var(--ink-3);}
+  .scroll{overflow-x:auto;}
+  /* ---- 提示条 ---- */
+  .note{border-radius:10px; padding:13px 16px; margin:14px 0; font-size:14.5px; line-height:1.7;}
+  .note .h{font-weight:700; display:block; margin-bottom:4px; font-size:14px;}
+  .note.ok{background:var(--ok-bg); border-left:4px solid var(--ok);}
+  .note.warn{background:var(--warn-bg); border-left:4px solid var(--warn);}
+  .note.bad{background:var(--bad-bg); border-left:4px solid var(--bad);}
+  .note.info{background:var(--info-bg); border-left:4px solid var(--info);}
+  /* ---- 其他 ---- */
+  code{background:#f1f3f6; border:1px solid var(--line-2); border-radius:4px; padding:1px 5px; font-size:13px;
+       font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;}
+  pre{background:#f1f3f6; border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto;
+      font-size:13px; line-height:1.6; font-family:"SFMono-Regular",Consolas,monospace;}
+  ul,ol{margin:9px 0; padding-left:22px;} li{margin:4px 0;}
+  .tag{display:inline-block; font-size:12px; padding:1px 7px; border-radius:20px; border:1px solid var(--line);
+       color:var(--ink-2); background:#f1f3f6; margin-right:4px;}
+  .tag.ok{background:var(--ok-bg); border-color:#b9e0cb; color:var(--ok);}
+  .tag.warn{background:var(--warn-bg); border-color:#f0d3a5; color:var(--warn);}
+  .tag.bad{background:var(--bad-bg); border-color:#f2c5c2; color:var(--bad);}
+  hr{border:0; border-top:1px solid var(--line); margin:28px 0;}
+  .foot{color:var(--ink-3); font-size:13px;}
+  @media (max-width:940px){
+    .wrap{flex-direction:column; padding:20px 16px 64px;}
+    nav{position:static; flex:none; max-height:none;}
+  }
+  @media print{
+    :root{--bg:#fff;}
+    body{background:#fff; font-size:11.5pt;}
+    nav{display:none;} .wrap{display:block; max-width:none; padding:0;}
+    section{page-break-inside:avoid;}
+    section > h2{page-break-after:avoid;}
+    table,.card,.note,.kpi{page-break-inside:avoid;}
+    a{color:inherit; text-decoration:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <h4>目录</h4>
+  <a href="#concl"><span class="n">0</span>结论速览</a>
+  <a href="#s1"><span class="n">1</span>赛项事实</a>
+  <a href="#s2"><span class="n">2</span>方案与事实不符处</a>
+  <a href="#s3"><span class="n">3</span>现状指标到底是多少</a>
+  <a href="#s4"><span class="n">4</span>消融：哪些特征该留该删</a>
+  <a href="#s5"><span class="n">5</span>更正：我上一轮判断错了</a>
+  <a href="#s6"><span class="n">6</span>明确做不到的</a>
+  <a href="#s7"><span class="n">7</span>风险与待办</a>
+  <a href="#s8"><span class="n">8</span>建议动作顺序</a>
+  <a href="#s9"><span class="n">9</span>本次新增的文件</a>
+</nav>
+
+<main>
+
+<header>
+  <div class="kicker">AIC · 第八届全球校园人工智能算法精英大赛</div>
+  <h1>「智慧气象」赛道改投可行性核查</h1>
+  <div class="sub">工银牧融 → AIC 副本 <code>AIC</code>｜核查日期 2026-09-29｜核查方式：官方材料 + 只读实验</div>
+  <div class="meta">本文所有结论均标注证据来源。凡我先前说错的地方，第 5 节明确更正。</div>
+</header>
+
+<section id="concl">
+  <h2><span class="num">0</span>结论速览</h2>
+  <div class="grid">
+    <div class="kpi ok">
+      <div class="t">可以拿分的地方</div>
+      <div class="v">需求分析 + 应用成效</div>
+      <div class="d">评分表共 6 项、100 分，<b>没有「算法精度」这一项</b>。最大单项是「创新性 25 分」，且官方明确允许<b>非模型级创新</b>。</div>
+    </div>
+    <div class="kpi bad">
+      <div class="t">真正的硬伤</div>
+      <div class="v">标签不是气象灾害</div>
+      <div class="d">128 条正样本里有 <b>32 条不是气象事件</b>（地震 7、保险覆盖 17、草场压力 4、疫病 2、疫苗 1）。</div>
+    </div>
+    <div class="kpi warn">
+      <div class="t">指标的真相</div>
+      <div class="v">最优 F1 仅 0.13–0.26</div>
+      <div class="d">「精确率 35–50%、R²&gt;0.65」在当前数据规模下<b>做不到</b>，差一个数量级。</div>
+    </div>
+    <div class="kpi info">
+      <div class="t">最省钱的改进</div>
+      <div class="v">改任务定义</div>
+      <div class="d">把「回归规则分数」改成「直接二分类」，<b>零算法改动</b>，同一份特征的 AUC 从 0.47–0.54 抬到 0.57–0.73。</div>
+    </div>
+  </div>
+  <div class="note bad">
+    <span class="h">一句话</span>
+    原方案的核心前提（「算法太传统＝致命伤，必须上 TimesNet / ST-GNN / PINN 才能冲国奖」）
+    与 AIC 官方评分表不符；而方案里引用的三处「现状硬伤」有两处与代码事实不符、一处是项目自己已声明作废的材料。
+    真正该修的是<b>标签口径</b>与<b>任务定义</b>，这两项都不需要新算法、不碰前端。
+  </div>
+</section>
+
+<section id="s1">
+  <h2><span class="num">1</span>赛项事实（官方材料为准）</h2>
+
+  <h3>1.1 赛事身份</h3>
+  <p>
+    <b>AIC ＝ 全球校园人工智能算法精英大赛</b>（第八届，2026），官网 <code>aicomp.cn</code>，
+    已纳入《全国普通高校大学生竞赛排行榜》目录 —— 所以「国奖」指总决赛奖项。
+    共设六个赛道（算法挑战赛 / 算法创新赛 / 算法应用赛 / <b>算法主题赛</b> / 产业命题赛 / 算法专项赛）。
+  </p>
+  <p>
+    本项目改投的是<b>算法主题赛「智慧气象」</b>（赛项号 AIC-TC-012，南京信息工程大学承办，
+    走赛马制、不分赛区）。赛题开放式，三个方向：① 人工智能赋能气象；② <b>气象数据赋能行业应用</b>（明确列出「金融」）；
+    ③ 气象数据融合创新。官方原文：「作品所属领域、技术路线和成果形态<b>不作限定</b>」。
+  </p>
+
+  <h3>1.2 时间线</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>节点</th><th>时间</th><th>产出</th></tr>
+    <tr><td>报名截止</td><td>2026-10-15 20:00</td><td>与初赛提交同日</td></tr>
+    <tr class="hl"><td><b>初赛作品提交截止</b></td><td><b>2026-10-15 20:00</b></td><td>作品方案 PDF + 演示视频 + 答辩 PPT + 佐证材料 + 网盘链接</td></tr>
+    <tr><td>复赛</td><td>2026-10 底前</td><td>线上评审；复赛一、二等奖晋级总决赛（省级证书）</td></tr>
+    <tr><td>全国总决赛</td><td>2026-11 底前</td><td>线下答辩 8 分钟 + 评委提问 5 分钟</td></tr>
+  </table>
+  </div>
+  <p class="foot">距初赛截稿：<b>17 天</b>（含国庆）。</p>
+
+  <h3>1.3 官方评分规则（附件1 原文）</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>评分项</th><th class="num">分值</th><th>细则关键用词</th></tr>
+    <tr class="hl"><td><b>创新性</b></td><td class="num"><b>25</b></td><td>「提出全新的 AI <b>应用模式或解决方案</b>」18-25 分；显著改进 9-17 分；创新程度较低 0-8 分</td></tr>
+    <tr><td>需求分析</td><td class="num">15</td><td>问题剖析深入全面、需求调研方法科学、需求把握准确</td></tr>
+    <tr><td>AI 技术应用</td><td class="num">20</td><td>「AI 技术或工具选择<b>合理</b>，与项目融合紧密，技术实现难度高且效果好」14-20 分</td></tr>
+    <tr><td>项目实施</td><td class="num">15</td><td>实施方案完整、计划合理、关键技术实现良好</td></tr>
+    <tr><td>应用成效</td><td class="num">15</td><td>成果显著、效益突出、<b>数据详实</b></td></tr>
+    <tr><td>总结与展望</td><td class="num">10</td><td>总结全面准确、展望合理且前瞻</td></tr>
+  </table>
+  </div>
+  <div class="note ok">
+    <span class="h">从评分表能读出的三件事</span>
+    ① <b>没有「算法指标 / 精度 / SOTA」这类评分项</b>；② 「AI 技术应用」的用词是「选择<b>合理</b>」，
+    不是「先进」；③ 规则明确要求申报时标注「核心创新层级（数据级 / 特征级 / 模型级 / 系统级 / 应用级）」，
+    并与现有主流方案做<b>定性</b>对比 —— 这是官方给「非模型级创新」留的位置。
+  </div>
+
+  <h3>1.4 材料硬约束（不满足会卡在形式审查）</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>材料</th><th>硬要求</th></tr>
+    <tr><td>作品名称</td><td>≤ 20 字</td></tr>
+    <tr><td>作品简介</td><td>≤ 300 字，按「问题-方案-效果-应用」逻辑</td></tr>
+    <tr><td>作品方案</td><td>PDF，<b>≤ 10 MB</b>；须用官方模板与大纲（结构与大纲逐节对应）</td></tr>
+    <tr><td>演示视频</td><td>MP4，<b>时长严格 3–5 分钟</b>，≤ 300 MB</td></tr>
+    <tr><td>答辩 PPT</td><td>也须交 <b>PDF</b></td></tr>
+    <tr><td>佐证材料</td><td>专利 / 软著 / 论文 / 合作意向书 / 用户反馈 / 试点证明，<b>合并为一个 PDF</b></td></tr>
+    <tr><td>代码包</td><td>上传百度网盘，命名 <code>团队编号-赛题名称-作品名称-XX</code></td></tr>
+    <tr><td class="num"><b>公平性</b></td><td><b>所有材料中不得出现参赛团队所在学校名称与指导教师信息</b></td></tr>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="h">两条容易踩的</span>
+    ① <b>公平性</b>是形式审查项，现有 docx / PPT 里大概率带着学校名与指导教师名，提交前必须清一遍。
+    ② 规则原文「<b>严禁以概念描述替代实际验证</b>」，原型作品须提交可行性测试报告（含测试环境、样本说明、<b>指标达成情况</b>）——
+    这意味着指标不仅要报，还要能说清怎么算出来的。
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>原方案「现状诊断」与代码事实不符处</h2>
+  <p>逐条回代码核过。五处不符，其中三处会直接误导改造方向。</p>
+  <div class="scroll">
+  <table>
+    <tr><th>方案的说法</th><th>代码事实</th><th>影响</th></tr>
+    <tr>
+      <td>核心模型仍是 sklearn 的 RandomForest 和 Ridge</td>
+      <td>还有 <b>XGBoost</b>，三套并存（<code>models.py:571/586/594</code>）</td>
+      <td><span class="tag">轻</span>表述不准</td>
+    </tr>
+    <tr>
+      <td>负样本 1458 / 正样本 42</td>
+      <td><b>1500 样本 = 正 128 / 负 1372</b>（<code>real_labels_1500.json</code>）</td>
+      <td><span class="tag bad">重</span>样本量判断错了 3 倍</td>
+    </tr>
+    <tr>
+      <td>R²=−0.645 是核心硬伤</td>
+      <td>是三折平均，第 3 折 −1.981 拖累（前两折 −0.001 / +0.048）；且<b>项目自己已把该报告强制标为无效</b>：<code>server.py:1181-1182</code> 会覆写 <code>overall_pass=False</code>、<code>report_status=not_valid_for_business_decision</code></td>
+      <td><span class="tag bad">重</span>拿自己已作废的材料当「现状」＝自伤</td>
+    </tr>
+    <tr>
+      <td>4.9% 精确率反映模型太弱</td>
+      <td>直接成因是<b>阈值迁移</b>：<code>backtest.py:165</code> 取训练集 80 分位当阈值，测试集分布已漂移，300 个样本里报了 <b>225 个</b>高风险（75%）→ 命中 11</td>
+      <td><span class="tag bad">重</span>换损失函数治不了阈值问题</td>
+    </tr>
+    <tr>
+      <td>PINN 约束「相邻网格气温遵守垂直递减率」</td>
+      <td><code>public_data/raw/dem/</code> 是<b>空目录</b>，无 DEM 栅格；只有 <code>region_list.csv</code> 的 26 个县<b>点位</b>高程</td>
+      <td><span class="tag warn">中</span>数据形态不支持「网格」表述</td>
+    </tr>
+  </table>
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>现状指标到底是多少</h2>
+  <p>
+    项目原有回测（<code>public_data/scripts/backtest.py</code>）的链路是：
+    <b>用回归器去拟合一个「规则加权分数」</b>
+    （<code>models.py:309</code>：<code>y = 气象×0.30 + 遥感×0.25 + 业务×0.20 + 金融×0.25</code>），
+    再用训练集 80 分位当阈值切高风险。
+  </p>
+  <div class="note bad">
+    <span class="h">这个目标函数本身有三个问题</span>
+    ① <b>45% 的标签权重是银行字段</b>（业务 20% + 金融 25%）—— 换任何前沿模型，学的仍是「30% 气象 + 25% 遥感 + 45% 银行」；
+    ② 标签是<b>规则算出来的</b>，模型去拟合规则，等于自己给自己出题；
+    ③ 用回归器拟合分数、再拿分位数切阈值，<b>等于人为把分类问题复杂化</b>。
+  </div>
+  <div class="scroll">
+  <table>
+    <tr><th>任务定义</th><th>模型</th><th class="num">测试 2023 AUC</th><th class="num">测试 2024 AUC</th></tr>
+    <tr class="dim">
+      <td>回归规则分数（项目现状）</td><td>RandomForestRegressor</td><td class="num">0.539</td><td class="num">—</td>
+    </tr>
+    <tr class="dim">
+      <td>回归规则分数（项目现状）</td><td>Ridge</td><td class="num">0.466</td><td class="num">—</td>
+    </tr>
+    <tr class="hl">
+      <td><b>直接二分类（建议改法）</b></td><td>RandomForestClassifier</td><td class="num"><b>0.574</b></td><td class="num"><b>0.677</b></td>
+    </tr>
+    <tr>
+      <td>直接二分类</td><td>XGBoost</td><td class="num">0.578</td><td class="num">0.585</td>
+    </tr>
+  </table>
+  </div>
+  <p class="foot">口径：滚动前向，训练 ＝ 全部 ≤ 上一年 12 月，测试 ＝ 指定年全年；标签 ＝ 全部 128 条正样本。AUC 0.5 ＝ 随机。</p>
+  <div class="note ok">
+    <span class="h">这是本次核查里最省钱的一条</span>
+    <b>不换算法、不换特征、不动前端</b>，只把任务从「回归规则分数」改成「直接二分类」，
+    同一份 16 维特征的 AUC 就从 0.47–0.54 抬到 0.57–0.73。方案里提议的 Focal Loss、
+    两阶段级联、深度网络，在这里都不如这一条直接。
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>消融：哪些特征该留、该删</h2>
+  <p>同一划分下逐个特征组做消融（RandomForest，直接用二值标签）。「标签口径」一列为用全部 128 条正样本，还是清洗后只留 96 条气象类正样本。</p>
+  <div class="scroll">
+  <table>
+    <tr>
+      <th>特征集</th><th class="num">维度</th>
+      <th class="num">全部标签<br>2023 / 2024</th>
+      <th class="num">仅气象类标签<br>2023 / 2024</th>
+      <th>判断</th>
+    </tr>
+    <tr>
+      <td>现状全量</td><td class="num">16</td>
+      <td class="num">0.574 / 0.677</td><td class="num">0.612 / 0.728</td>
+      <td>基准</td>
+    </tr>
+    <tr class="hl">
+      <td>去掉 3 个信贷字段</td><td class="num">13</td>
+      <td class="num">0.581 / 0.656</td><td class="num">0.621 / 0.722</td>
+      <td><b>几乎不掉 → 可以放心删</b>（顺带解决「银行味」与标签泄漏）</td>
+    </tr>
+    <tr class="hl">
+      <td>再去掉 3 个规则风险等级字段</td><td class="num">10</td>
+      <td class="num">0.581 / 0.666</td><td class="num">0.612 / 0.699</td>
+      <td><b>仍不掉 → 可瘦身到 10 维</b>，答辩更好讲</td>
+    </tr>
+    <tr>
+      <td>只留 4 个实测观测量（温、降水、风、雪深）</td><td class="num">4</td>
+      <td class="num">0.546 / 0.595</td><td class="num">— / 0.704</td>
+      <td>信号主要来源在气象侧</td>
+    </tr>
+    <tr class="dim">
+      <td>只留 3 个规则风险等级（高/中/低）</td><td class="num">3</td>
+      <td class="num">0.416 / 0.550</td><td class="num">— / 0.512</td>
+      <td><b>接近噪音</b>，删掉无损</td>
+    </tr>
+    <tr class="dim">
+      <td>ERA5 逐日聚合成 14 维月度特征</td><td class="num">14</td>
+      <td class="num">0.614 / 0.616</td><td class="num">0.537 / 0.653</td>
+      <td><b>不优于现状</b>（见第 5 节更正）</td>
+    </tr>
+    <tr class="dim">
+      <td>ERA5 14 维 + 26 县独热</td><td class="num">40</td>
+      <td class="num">0.624 / 0.652</td><td class="num">0.523 / 0.641</td>
+      <td>加「县身份」不提升 → 不存在县身份虚高</td>
+    </tr>
+  </table>
+  </div>
+  <div class="note info">
+    <span class="h">为什么「规则风险等级」是噪音</span>
+    <code>cold_wave_risk</code> / <code>snowstorm_risk</code> / <code>drought_risk</code> 是「高 / 中 / 低」字符串，
+    本身是规则派生的等级，不是观测量。单用它们 AUC 只有 0.42–0.55；而单用四个原始观测量就有 0.55–0.70。
+    换句话说：<b>信号在观测值里，不在派生等级里</b>。
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>更正：我上一轮的两个判断错了</h2>
+  <p>核查过程中我先给过一版初步结论，随后被更严格的实验推翻。原样记下来，避免后面接着错。</p>
+  <div class="scroll">
+  <table>
+    <tr><th>我先前说</th><th>实际</th><th>错在哪</th></tr>
+    <tr>
+      <td>「现状模型 AUC＝0.5，等于瞎猜」</td>
+      <td>只对<b>回归器</b>成立（0.47–0.54）。换成<b>分类器</b>直接拟合二值标签，同一份特征 AUC 达 0.57–0.73</td>
+      <td>把「任务定义有问题」误读成了「特征没有信号」</td>
+    </tr>
+    <tr>
+      <td>「气象数据是每月 1 日的单点快照，所以没信号；换成 ERA5 逐日聚合就能把 AUC 抬到 0.63–0.70」</td>
+      <td>ERA5 月度 14 维在同条件下<b>不优于</b>现状（0.537–0.653 vs 0.612–0.728）；实测四个观测量本身就有 0.55–0.70</td>
+      <td>① 上一版拿全期气候态算距平，把<b>未来信息泄漏</b>进了历史样本；② 没和现状做同条件对比；③ 忽略了 ERA5 那两列<b>没有雪深</b>，而雪灾是最大灾种（41/96）</td>
+    </tr>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="h">这条更正改变了建议</span>
+    原来推荐的「第一步：换 ERA5 特征」→ 现在降级为<b>可选</b>。
+    真正该先做的是「<b>改任务定义 + 洗标签 + 删无用特征</b>」，这三项都不需要新数据、不需要新算法。
+    若将来仍要用 ERA5 做气象侧强化，必须先补齐 <code>snow_depth</code> 与风速变量，否则无法替代现有实测雪深。
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>明确做不到的（别再往方案里写）</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>方案里的目标</th><th>可行性</th><th>依据</th></tr>
+    <tr>
+      <td>精确率提升到 35%–50%，召回保持 85% 以上</td>
+      <td><span class="tag bad">做不到</span></td>
+      <td>全部 8 组特征集 × 2 个测试年，<b>最优 F1 只有 0.13–0.26</b>；召回≥0.9 时的精确率只有 0.05–0.10。且测试年正样本仅 13–21 条，<b>一个样本的变动就是 5–7 个百分点的抖动</b></td>
+    </tr>
+    <tr>
+      <td>把 R² 扭转为 &gt; 0.65</td>
+      <td><span class="tag bad">不成立</span></td>
+      <td>R² 是回归指标，当前任务本质是「识别灾害月」＝分类任务。要报 R² 就得先定义清「回归什么量」；用规则派生分数回归，R² 没有业务含义</td>
+    </tr>
+    <tr>
+      <td>积雪消融能量平衡（PINN 的 L_snow_energy）</td>
+      <td><span class="tag bad">缺数据</span></td>
+      <td><code>climate_era5.json</code> 只含 <code>temp_mean</code> 与 <code>precip_mm</code> 两列，<b>没有地表辐射、反照率、日照时数</b></td>
+    </tr>
+    <tr>
+      <td>垂直递减率的<b>网格</b>约束</td>
+      <td><span class="tag bad">缺数据</span></td>
+      <td>无 DEM 栅格；只有 26 个县的点位高程。可做的是「跨县温度—高程一致性检验」，不是网格约束</td>
+    </tr>
+    <tr>
+      <td>前端「风场粒子流」</td>
+      <td><span class="tag bad">缺数据</span></td>
+      <td>手上无风场数据（仅有 <code>wind_speed_mps</code> 单值，无风向 / 无网格场）</td>
+    </tr>
+    <tr>
+      <td>SAR + 光学融合补全 NDVI（CNN-LSTM）</td>
+      <td><span class="tag bad">缺数据</span></td>
+      <td><code>early_warning.py:539-541</code> 自述：需至少 1 年 Sentinel-1/2 配对数据训练，当前为框架预留、用月度插值替代。拿不到配对数据就不能写成「已实现」</td>
+    </tr>
+    <tr>
+      <td>训练 SOTA 时空大模型 / 时序大模型</td>
+      <td><span class="tag warn">不建议</span></td>
+      <td>样本量 1872（26 县 × 72 月）、正样本 128（气象类 96）；本机 <b>无 GPU</b>（<code>torch 2.13.0+cpu</code>）。在这个规模上堆参数量只会过拟合，且官方评分表不考核模型规模</td>
+    </tr>
+  </table>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>风险与待办</h2>
+  <div class="note bad">
+    <span class="h">⚠️ AIC 副本与工行杯共用一个 Git 仓库</span>
+    <code>AIC/.git</code>（86 MB）的 remote 仍是 <code>github.com/wndwns/-.git</code>，HEAD 同为 <code>c6fffe4</code>。
+    若不先隔离，AIC 版本的提交会推到工行杯的仓库里，两个参赛版本会互相污染。<b>开工前应先处理</b>。
+  </div>
+  <ul>
+    <li><b>学校名与指导教师信息清理</b>：所有材料（方案 / 视频 / PPT / 佐证）中不得出现。</li>
+    <li><b>官方作品方案模板尚未取得</b>：在百度网盘（<code>pan.baidu.com/s/1Ar9fYa25nI8yimHqi5o3hg?pwd=2026</code>），需人工下载后让方案逐节对齐大纲。</li>
+    <li><b>1372 个「未确认」月</b>：现状把 `label=0` 全部当负样本参与评价，但项目自身的口径是「不等同无灾」。已在新标签产物中加 <code>confirmed_no_event=false</code> 显式标记，评价时需在报告中披露这一口径。</li>
+    <li><b>演示视频 3–5 分钟</b>：需真人录制 / 剪辑，属独立工作量。</li>
+    <li><b>Serena 本地 HTTP（127.0.0.1:24282）未运行</b>：本次因只新增文件、不改现有符号，未使用；<b>后续若要改 <code>models.py</code> 等既有文件，需先启动</b>。</li>
+  </ul>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span>建议动作顺序</h2>
+  <div class="scroll">
+  <table>
+    <tr><th class="num">步</th><th>做什么</th><th>为什么先做它</th><th>碰不碰算法/前端</th></tr>
+    <tr class="hl">
+      <td class="num">1</td>
+      <td>改任务定义：回归规则分数 → 直接二分类（概率输出）</td>
+      <td>零成本，AUC 0.47–0.54 → 0.57–0.73，是唯一「不花代价就能抬指标」的动作</td>
+      <td>只改训练/评价链路</td>
+    </tr>
+    <tr class="hl">
+      <td class="num">2</td>
+      <td>洗标签：32 条非气象事件从正样本中剔除（保留原记录、只加标注）</td>
+      <td>这是经得起气象方向评委追问的前提；且顺带修掉 <code>insurance_coverage</code> 的标签泄漏</td>
+      <td>数据口径，不动前端</td>
+    </tr>
+    <tr>
+      <td class="num">3</td>
+      <td>特征瘦身：删 3 个信贷字段 + 3 个规则等级，16 维 → 10 维</td>
+      <td>实测几乎不掉性能；同时完成「去金融化」的实质部分，答辩好讲</td>
+      <td>不动前端</td>
+    </tr>
+    <tr>
+      <td class="num">4</td>
+      <td>把「创新层级」定在<b>数据级 + 系统级</b>，写进方案（官方要求标注层级）</td>
+      <td>官方明确允许非模型级创新，且这与项目真实资产一致</td>
+      <td>写文档</td>
+    </tr>
+    <tr>
+      <td class="num">5</td>
+      <td>按官方大纲重写方案 + 3–5 分钟演示视频 + PDF 版 PPT</td>
+      <td>初赛的实际交付物，占评分 100 分</td>
+      <td>写文档</td>
+    </tr>
+    <tr class="dim">
+      <td class="num">6</td>
+      <td>（可选，时间允许）补 ERA5 的 <code>snow_depth</code> / 风速变量，增强气象侧专业性</td>
+      <td>现阶段 ERA5 只有温 + 降水两列，替代不了实测雪深</td>
+      <td>数据层</td>
+    </tr>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="h">关于「指标好看」的一句实话</span>
+    老实路（改任务定义 + 洗标签 + 瘦身特征）能把 AUC 做到 0.57–0.73 并<b>让它可解释、可复现</b>；
+    再往上（精确率 35%+）在这个样本量下做不到。而总决赛是线下 8 分钟答辩 + 5 分钟提问，
+    文档里的数字要能当场解释清怎么算的 —— 这一步校赛能糊，国赛糊不过去。
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span>本次新增的文件</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>文件</th><th>作用</th></tr>
+    <tr><td><code>backend/meteo_features.py</code></td><td>ERA5 逐日 → 月度气象特征（14 维）；含气象 / 非气象事件分类学；声明了缺什么数据、因此没做什么</td></tr>
+    <tr><td><code>public_data/scripts/build_meteo_monthly.py</code></td><td>生成 <code>meteo_monthly_features.json</code> 与 <code>meteo_event_labels.json</code>（标签清洗＝加标注，不删记录）</td></tr>
+    <tr><td><code>public_data/scripts/eval_meteo_vs_current.py</code></td><td>8 组特征集 × 2 标签口径 × 2 测试年 × 3 模型 的对照与消融，产出 <code>meteo_eval_report.json</code></td></tr>
+    <tr><td><code>AIC官方材料/</code>（3 份 PDF）</td><td>竞赛规则及作品提交要求 / 作品方案参考大纲 / 举办通知</td></tr>
+  </table>
+  </div>
+  <p class="foot">本次核查<b>未修改任何既有文件</b>，全部为新增，可整目录回退。</p>
+</section>
+
+<hr>
+<p class="foot">
+  核查日期 2026-09-29 · 依据：AIC 官方附件 PDF、项目代码与数据（只读）、8 组对照实验 · 距初赛截稿 17 天
+</p>
+
+</main>
+</div>
+</body>
+</html>

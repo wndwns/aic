@@ -1,0 +1,1266 @@
+{
+ "generated_by": "public_data/scripts/eval_meteo_vs_current.py",
+ "label_source": "meteo_event_labels.json",
+ "feature_sources": {
+  "现状*": "backend/models.py::_extract_monthly_samples（16 维；末 3 维为县内恒定的信贷字段）",
+  "ERA5月度14维": "backend/data_store/meteo_monthly_features.json",
+  "ERA5+县独热": "ERA5 月度特征 + 26 县独热（用于量化「县身份」带来的虚高）"
+ },
+ "protocol": "滚动前向：训练 = 全部 ≤ 上一年 12 月；测试 = 指定年全年；分类器直接拟合二值标签",
+ "caveats": [
+  "未确认月按项目现状口径作为负样本参与评价；不等同已确认无灾。",
+  "best_f1 / P@R90 / R@P30 由测试集上的阈值曲线给出，属乐观口径，不代表部署可达。",
+  "测试年正样本仅一二十条，单个样本的变动即带来数个百分点抖动。",
+  "本项目原有回测用的是回归器（RandomForestRegressor 拟合规则分数），本表用分类器直接拟合二值标签，两者不可直接比较。"
+ ],
+ "rows": [
+  {
+   "feature_set": "现状16维",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.574,
+     "ap": 0.093,
+     "best_f1": 0.162,
+     "best_f1_P": 0.089,
+     "best_f1_R": 0.95,
+     "best_f1_thr": 0.096,
+     "P_at_R90": 0.089,
+     "R_at_P30": 0.05
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.578,
+     "ap": 0.104,
+     "best_f1": 0.211,
+     "best_f1_P": 0.222,
+     "best_f1_R": 0.2,
+     "best_f1_thr": 0.569,
+     "P_at_R90": 0.084,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状13维(去信贷)",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.581,
+     "ap": 0.09,
+     "best_f1": 0.165,
+     "best_f1_P": 0.091,
+     "best_f1_R": 0.9,
+     "best_f1_thr": 0.13,
+     "P_at_R90": 0.091,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.58,
+     "ap": 0.105,
+     "best_f1": 0.218,
+     "best_f1_P": 0.171,
+     "best_f1_R": 0.3,
+     "best_f1_thr": 0.381,
+     "P_at_R90": 0.083,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状10维(去信贷去等级)",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.581,
+     "ap": 0.098,
+     "best_f1": 0.167,
+     "best_f1_P": 0.091,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.091,
+     "P_at_R90": 0.091,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.584,
+     "ap": 0.1,
+     "best_f1": 0.182,
+     "best_f1_P": 0.143,
+     "best_f1_R": 0.25,
+     "best_f1_thr": 0.401,
+     "P_at_R90": 0.081,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状7维(仅气象快照)",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.524,
+     "ap": 0.094,
+     "best_f1": 0.187,
+     "best_f1_P": 0.25,
+     "best_f1_R": 0.15,
+     "best_f1_thr": 0.691,
+     "P_at_R90": 0.072,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.57,
+     "ap": 0.093,
+     "best_f1": 0.179,
+     "best_f1_P": 0.139,
+     "best_f1_R": 0.25,
+     "best_f1_thr": 0.535,
+     "P_at_R90": 0.075,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状4维(温降风雪实测)",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.546,
+     "ap": 0.099,
+     "best_f1": 0.205,
+     "best_f1_P": 0.211,
+     "best_f1_R": 0.2,
+     "best_f1_thr": 0.674,
+     "P_at_R90": 0.076,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.573,
+     "ap": 0.094,
+     "best_f1": 0.167,
+     "best_f1_P": 0.115,
+     "best_f1_R": 0.3,
+     "best_f1_thr": 0.385,
+     "P_at_R90": 0.086,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状3维(规则风险等级)",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.416,
+     "ap": 0.057,
+     "best_f1": 0.125,
+     "best_f1_P": 0.067,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.299,
+     "P_at_R90": 0.067,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.413,
+     "ap": 0.057,
+     "best_f1": 0.125,
+     "best_f1_P": 0.067,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.302,
+     "P_at_R90": 0.067,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5月度14维",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.614,
+     "ap": 0.138,
+     "best_f1": 0.196,
+     "best_f1_P": 0.114,
+     "best_f1_R": 0.7,
+     "best_f1_thr": 0.244,
+     "P_at_R90": 0.07,
+     "R_at_P30": 0.05
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.566,
+     "ap": 0.079,
+     "best_f1": 0.178,
+     "best_f1_P": 0.114,
+     "best_f1_R": 0.4,
+     "best_f1_thr": 0.181,
+     "P_at_R90": 0.084,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5+县独热",
+   "label_scope": "all",
+   "test_year": "2023",
+   "n_train": 900,
+   "n_train_pos": 87,
+   "n_test": 300,
+   "n_test_pos": 20,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.624,
+     "ap": 0.107,
+     "best_f1": 0.235,
+     "best_f1_P": 0.167,
+     "best_f1_R": 0.4,
+     "best_f1_thr": 0.39,
+     "P_at_R90": 0.072,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 20,
+     "auc": 0.556,
+     "ap": 0.079,
+     "best_f1": 0.146,
+     "best_f1_P": 0.092,
+     "best_f1_R": 0.35,
+     "best_f1_thr": 0.13,
+     "P_at_R90": 0.076,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.067
+    }
+   }
+  },
+  {
+   "feature_set": "现状16维",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.677,
+     "ap": 0.141,
+     "best_f1": 0.209,
+     "best_f1_P": 0.138,
+     "best_f1_R": 0.429,
+     "best_f1_thr": 0.325,
+     "P_at_R90": 0.095,
+     "R_at_P30": 0.048
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.585,
+     "ap": 0.092,
+     "best_f1": 0.169,
+     "best_f1_P": 0.113,
+     "best_f1_R": 0.333,
+     "best_f1_thr": 0.185,
+     "P_at_R90": 0.078,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状13维(去信贷)",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.656,
+     "ap": 0.115,
+     "best_f1": 0.214,
+     "best_f1_P": 0.132,
+     "best_f1_R": 0.571,
+     "best_f1_thr": 0.285,
+     "P_at_R90": 0.09,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.574,
+     "ap": 0.108,
+     "best_f1": 0.2,
+     "best_f1_P": 0.211,
+     "best_f1_R": 0.19,
+     "best_f1_thr": 0.491,
+     "P_at_R90": 0.087,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状10维(去信贷去等级)",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.666,
+     "ap": 0.122,
+     "best_f1": 0.231,
+     "best_f1_P": 0.158,
+     "best_f1_R": 0.429,
+     "best_f1_thr": 0.338,
+     "P_at_R90": 0.086,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.592,
+     "ap": 0.112,
+     "best_f1": 0.214,
+     "best_f1_P": 0.171,
+     "best_f1_R": 0.286,
+     "best_f1_thr": 0.364,
+     "P_at_R90": 0.081,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状7维(仅气象快照)",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.602,
+     "ap": 0.097,
+     "best_f1": 0.168,
+     "best_f1_P": 0.094,
+     "best_f1_R": 0.81,
+     "best_f1_thr": 0.154,
+     "P_at_R90": 0.084,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.573,
+     "ap": 0.095,
+     "best_f1": 0.158,
+     "best_f1_P": 0.086,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.015,
+     "P_at_R90": 0.086,
+     "R_at_P30": 0.048
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状4维(温降风雪实测)",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.595,
+     "ap": 0.09,
+     "best_f1": 0.182,
+     "best_f1_P": 0.125,
+     "best_f1_R": 0.333,
+     "best_f1_thr": 0.417,
+     "P_at_R90": 0.083,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.569,
+     "ap": 0.089,
+     "best_f1": 0.168,
+     "best_f1_P": 0.108,
+     "best_f1_R": 0.381,
+     "best_f1_thr": 0.285,
+     "P_at_R90": 0.086,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状3维(规则风险等级)",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.55,
+     "ap": 0.083,
+     "best_f1": 0.147,
+     "best_f1_P": 0.095,
+     "best_f1_R": 0.333,
+     "best_f1_thr": 0.577,
+     "P_at_R90": 0.07,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.545,
+     "ap": 0.081,
+     "best_f1": 0.147,
+     "best_f1_P": 0.095,
+     "best_f1_R": 0.333,
+     "best_f1_thr": 0.547,
+     "P_at_R90": 0.07,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5月度14维",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.616,
+     "ap": 0.133,
+     "best_f1": 0.219,
+     "best_f1_P": 0.163,
+     "best_f1_R": 0.333,
+     "best_f1_thr": 0.336,
+     "P_at_R90": 0.083,
+     "R_at_P30": 0.048
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.583,
+     "ap": 0.139,
+     "best_f1": 0.19,
+     "best_f1_P": 0.112,
+     "best_f1_R": 0.619,
+     "best_f1_thr": 0.062,
+     "P_at_R90": 0.083,
+     "R_at_P30": 0.048
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5+县独热",
+   "label_scope": "all",
+   "test_year": "2024",
+   "n_train": 1200,
+   "n_train_pos": 107,
+   "n_test": 300,
+   "n_test_pos": 21,
+   "models": {
+    "RandomForest": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.652,
+     "ap": 0.15,
+     "best_f1": 0.261,
+     "best_f1_P": 0.24,
+     "best_f1_R": 0.286,
+     "best_f1_thr": 0.404,
+     "P_at_R90": 0.085,
+     "R_at_P30": 0.048
+    },
+    "XGBoost": {
+     "n": 300,
+     "n_pos": 21,
+     "auc": 0.54,
+     "ap": 0.132,
+     "best_f1": 0.184,
+     "best_f1_P": 0.121,
+     "best_f1_R": 0.381,
+     "best_f1_thr": 0.124,
+     "P_at_R90": 0.076,
+     "R_at_P30": 0.048
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.07
+    }
+   }
+  },
+  {
+   "feature_set": "现状16维",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.612,
+     "ap": 0.082,
+     "best_f1": 0.135,
+     "best_f1_P": 0.073,
+     "best_f1_R": 0.929,
+     "best_f1_thr": 0.087,
+     "P_at_R90": 0.073,
+     "R_at_P30": 0.071
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.589,
+     "ap": 0.081,
+     "best_f1": 0.176,
+     "best_f1_P": 0.15,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.476,
+     "P_at_R90": 0.067,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状13维(去信贷)",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.621,
+     "ap": 0.084,
+     "best_f1": 0.129,
+     "best_f1_P": 0.076,
+     "best_f1_R": 0.429,
+     "best_f1_thr": 0.275,
+     "P_at_R90": 0.067,
+     "R_at_P30": 0.071
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.582,
+     "ap": 0.082,
+     "best_f1": 0.143,
+     "best_f1_P": 0.143,
+     "best_f1_R": 0.143,
+     "best_f1_thr": 0.6,
+     "P_at_R90": 0.058,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状10维(去信贷去等级)",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.612,
+     "ap": 0.098,
+     "best_f1": 0.127,
+     "best_f1_P": 0.068,
+     "best_f1_R": 0.929,
+     "best_f1_thr": 0.087,
+     "P_at_R90": 0.068,
+     "R_at_P30": 0.071
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.567,
+     "ap": 0.075,
+     "best_f1": 0.171,
+     "best_f1_P": 0.143,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.428,
+     "P_at_R90": 0.061,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状7维(仅气象快照)",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.601,
+     "ap": 0.088,
+     "best_f1": 0.19,
+     "best_f1_P": 0.286,
+     "best_f1_R": 0.143,
+     "best_f1_thr": 0.725,
+     "P_at_R90": 0.064,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.598,
+     "ap": 0.081,
+     "best_f1": 0.188,
+     "best_f1_P": 0.167,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.685,
+     "P_at_R90": 0.057,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状4维(温降风雪实测)",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.593,
+     "ap": 0.091,
+     "best_f1": 0.154,
+     "best_f1_P": 0.167,
+     "best_f1_R": 0.143,
+     "best_f1_thr": 0.641,
+     "P_at_R90": 0.058,
+     "R_at_P30": 0.071
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.593,
+     "ap": 0.085,
+     "best_f1": 0.214,
+     "best_f1_P": 0.214,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.751,
+     "P_at_R90": 0.057,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状3维(规则风险等级)",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.438,
+     "ap": 0.043,
+     "best_f1": 0.091,
+     "best_f1_P": 0.048,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.187,
+     "P_at_R90": 0.048,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.438,
+     "ap": 0.043,
+     "best_f1": 0.091,
+     "best_f1_P": 0.048,
+     "best_f1_R": 1.0,
+     "best_f1_thr": 0.179,
+     "P_at_R90": 0.048,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5月度14维",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.537,
+     "ap": 0.133,
+     "best_f1": 0.178,
+     "best_f1_P": 0.129,
+     "best_f1_R": 0.286,
+     "best_f1_thr": 0.378,
+     "P_at_R90": 0.052,
+     "R_at_P30": 0.071
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.502,
+     "ap": 0.059,
+     "best_f1": 0.129,
+     "best_f1_P": 0.118,
+     "best_f1_R": 0.143,
+     "best_f1_thr": 0.506,
+     "P_at_R90": 0.051,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5+县独热",
+   "label_scope": "meteo",
+   "test_year": "2023",
+   "n_train": 882,
+   "n_train_pos": 69,
+   "n_test": 294,
+   "n_test_pos": 14,
+   "models": {
+    "RandomForest": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.523,
+     "ap": 0.083,
+     "best_f1": 0.2,
+     "best_f1_P": 0.188,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.501,
+     "P_at_R90": 0.052,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 294,
+     "n_pos": 14,
+     "auc": 0.505,
+     "ap": 0.058,
+     "best_f1": 0.133,
+     "best_f1_P": 0.097,
+     "best_f1_R": 0.214,
+     "best_f1_thr": 0.245,
+     "P_at_R90": 0.052,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.048
+    }
+   }
+  },
+  {
+   "feature_set": "现状16维",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.728,
+     "ap": 0.11,
+     "best_f1": 0.242,
+     "best_f1_P": 0.2,
+     "best_f1_R": 0.308,
+     "best_f1_thr": 0.448,
+     "P_at_R90": 0.059,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.682,
+     "ap": 0.092,
+     "best_f1": 0.211,
+     "best_f1_P": 0.16,
+     "best_f1_R": 0.308,
+     "best_f1_thr": 0.337,
+     "P_at_R90": 0.075,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "现状13维(去信贷)",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.722,
+     "ap": 0.103,
+     "best_f1": 0.216,
+     "best_f1_P": 0.131,
+     "best_f1_R": 0.615,
+     "best_f1_thr": 0.269,
+     "P_at_R90": 0.063,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.663,
+     "ap": 0.078,
+     "best_f1": 0.167,
+     "best_f1_P": 0.13,
+     "best_f1_R": 0.231,
+     "best_f1_thr": 0.33,
+     "P_at_R90": 0.061,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "现状10维(去信贷去等级)",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.699,
+     "ap": 0.099,
+     "best_f1": 0.226,
+     "best_f1_P": 0.143,
+     "best_f1_R": 0.538,
+     "best_f1_thr": 0.317,
+     "P_at_R90": 0.058,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.697,
+     "ap": 0.103,
+     "best_f1": 0.187,
+     "best_f1_P": 0.158,
+     "best_f1_R": 0.231,
+     "best_f1_thr": 0.396,
+     "P_at_R90": 0.06,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "现状7维(仅气象快照)",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.707,
+     "ap": 0.09,
+     "best_f1": 0.167,
+     "best_f1_P": 0.106,
+     "best_f1_R": 0.385,
+     "best_f1_thr": 0.392,
+     "P_at_R90": 0.071,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.658,
+     "ap": 0.073,
+     "best_f1": 0.139,
+     "best_f1_P": 0.078,
+     "best_f1_R": 0.615,
+     "best_f1_thr": 0.09,
+     "P_at_R90": 0.07,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "现状4维(温降风雪实测)",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.704,
+     "ap": 0.096,
+     "best_f1": 0.222,
+     "best_f1_P": 0.174,
+     "best_f1_R": 0.308,
+     "best_f1_thr": 0.485,
+     "P_at_R90": 0.061,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.637,
+     "ap": 0.073,
+     "best_f1": 0.167,
+     "best_f1_P": 0.114,
+     "best_f1_R": 0.308,
+     "best_f1_thr": 0.336,
+     "P_at_R90": 0.061,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "现状3维(规则风险等级)",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.512,
+     "ap": 0.068,
+     "best_f1": 0.182,
+     "best_f1_P": 0.222,
+     "best_f1_R": 0.154,
+     "best_f1_thr": 0.653,
+     "P_at_R90": 0.045,
+     "R_at_P30": 0.0
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.512,
+     "ap": 0.068,
+     "best_f1": 0.182,
+     "best_f1_P": 0.222,
+     "best_f1_R": 0.154,
+     "best_f1_thr": 0.635,
+     "P_at_R90": 0.045,
+     "R_at_P30": 0.0
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5月度14维",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.653,
+     "ap": 0.121,
+     "best_f1": 0.227,
+     "best_f1_P": 0.161,
+     "best_f1_R": 0.385,
+     "best_f1_thr": 0.308,
+     "P_at_R90": 0.06,
+     "R_at_P30": 0.077
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.554,
+     "ap": 0.09,
+     "best_f1": 0.133,
+     "best_f1_P": 0.5,
+     "best_f1_R": 0.077,
+     "best_f1_thr": 0.819,
+     "P_at_R90": 0.052,
+     "R_at_P30": 0.077
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  },
+  {
+   "feature_set": "ERA5+县独热",
+   "label_scope": "meteo",
+   "test_year": "2024",
+   "n_train": 1176,
+   "n_train_pos": 83,
+   "n_test": 292,
+   "n_test_pos": 13,
+   "models": {
+    "RandomForest": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.641,
+     "ap": 0.109,
+     "best_f1": 0.222,
+     "best_f1_P": 0.174,
+     "best_f1_R": 0.308,
+     "best_f1_thr": 0.35,
+     "P_at_R90": 0.059,
+     "R_at_P30": 0.077
+    },
+    "XGBoost": {
+     "n": 292,
+     "n_pos": 13,
+     "auc": 0.559,
+     "ap": 0.098,
+     "best_f1": 0.167,
+     "best_f1_P": 0.182,
+     "best_f1_R": 0.154,
+     "best_f1_thr": 0.307,
+     "P_at_R90": 0.052,
+     "R_at_P30": 0.077
+    },
+    "随机基线": {
+     "auc": 0.5,
+     "ap": 0.045
+    }
+   }
+  }
+ ]
+}

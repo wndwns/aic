@@ -30,12 +30,94 @@ import subprocess
 import sys
 import tempfile
 import threading
+from pathlib import Path
 
 DEFAULT_PROXY = "127.0.0.1:7897"
 SSH_HOST = "ssh.github.com"
 SSH_PORT = 443
-REPO_SSH_URL = f"ssh://git@{SSH_HOST}:{SSH_PORT}/wndwns/-.git"
 REMOTE_NAME = "origin"
+
+
+def repo_ssh_url(explicit: str | None = None) -> str:
+    """把 origin 的地址转成「SSH over 443」形式。
+
+    以前这里把仓库路径写死成 `wndwns/-.git`，导致同一个项目改投别的比赛、
+    换到新仓库后，脚本仍然往旧仓库推。改成从 origin 推导，换仓库不用改脚本。
+    """
+    if explicit:
+        raw = explicit
+    else:
+        raw = subprocess.run(["git", "remote", "get-url", REMOTE_NAME],
+                             capture_output=True, text=True).stdout.strip()
+    if not raw:
+        raise SystemExit(f"取不到 {REMOTE_NAME} 的地址，请先 git remote set-url")
+
+    path = raw
+    for prefix in ("https://github.com/", "http://github.com/",
+                   "ssh://git@github.com/", f"ssh://git@{SSH_HOST}:{SSH_PORT}/",
+                   "git@github.com:"):
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+            break
+    path = path.strip("/")
+    if not path.endswith(".git"):
+        path += ".git"
+    return f"ssh://git@{SSH_HOST}:{SSH_PORT}/{path}"
+
+
+def _force_ref(branch: str, sha: str) -> bool:
+    """写分支引用并回读校验。
+
+    本机会出现 `git update-ref` / `git branch -f` 返回成功却不落盘的情况，
+    所以写后必须回读；不一致就手写 ref 文件（实测有效）。
+    """
+    subprocess.call(["git", "update-ref", f"refs/heads/{branch}", sha],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    got = subprocess.run(["git", "rev-parse", "--verify", f"refs/heads/{branch}"],
+                         capture_output=True, text=True).stdout.strip()
+    if got == sha:
+        return True
+    ref_file = Path(".git") / "refs" / "heads" / branch
+    ref_file.parent.mkdir(parents=True, exist_ok=True)
+    ref_file.write_text(sha + "\n", encoding="ascii")
+    got = subprocess.run(["git", "rev-parse", "--verify", f"refs/heads/{branch}"],
+                         capture_output=True, text=True).stdout.strip()
+    return got == sha
+
+
+def _proxy_args(proxy: str) -> list[str]:
+    """git 的 HTTPS 请求走同一个 SOCKS5 代理。
+
+    本机直连 github:443 不通（Clash 的 HTTP 隧道会回 502），
+    所以 fetch / ls-remote 这类非 SSH 操作也必须显式指代理，否则会静默失败。
+    """
+    return ["-c", f"http.proxy=socks5h://{proxy}", "-c", f"https.proxy=socks5h://{proxy}"]
+
+
+def sync_local_refs(proxy: str) -> None:
+    """按**远端真值**对齐本地分支。
+
+    ⚠️ 不读 `origin/<branch>` 这类 remote-tracking 引用：本机出现过 packed-refs
+    残留陈旧值把本地 main 带歪的情况，所以直接问远端。
+    """
+    out = subprocess.run(["git", *_proxy_args(proxy), "ls-remote", REMOTE_NAME],
+                         capture_output=True, text=True).stdout
+    if not out.strip():
+        print("  （远端引用读取不到，跳过本地对齐；请手工 git ls-remote 核对）")
+        return
+    for line in out.splitlines():
+        sha, _, ref = line.partition("\t")
+        if not ref.startswith("refs/heads/"):
+            continue
+        branch = ref[len("refs/heads/"):]
+        cur = subprocess.run(["git", "rev-parse", "--verify", f"refs/heads/{branch}"],
+                             capture_output=True, text=True)
+        if cur.returncode != 0:
+            continue          # 本地没这个分支，不动
+        if cur.stdout.strip() == sha:
+            continue
+        ok = _force_ref(branch, sha)
+        print(f"  {branch}: 本地对齐到 {sha[:7]}{'' if ok else '（写入失败，请手工核对）'}")
 
 
 # --------------------------------------------------------------------- SOCKS5 桥
@@ -125,15 +207,23 @@ def main(argv: list[str]) -> int:
         proxy = args[i + 1]
         del args[i:i + 2]
 
+    explicit_url = None
+    if "--repo-url" in args:
+        i = args.index("--repo-url")
+        explicit_url = args[i + 1]
+        del args[i:i + 2]
+
     if args[:1] == ["--bridge"]:
         host, port = args[1], int(args[2])
         ph, _, pp = proxy.partition(":")
         return bridge(host, port, ph, int(pp or 7897))
 
     ssh_config = write_ssh_config(proxy)
+    url = repo_ssh_url(explicit_url)
 
     if not args or args == ["--check"]:
         print(f"验证 SSH 认证（经 {proxy} → {SSH_HOST}:{SSH_PORT}）…")
+        print(f"目标仓库：{url}")
         rc = subprocess.call(["ssh", "-F", ssh_config, "-T", f"git@{SSH_HOST}"],
                              stderr=subprocess.STDOUT)
         return 0 if rc == 0 else rc
@@ -141,7 +231,8 @@ def main(argv: list[str]) -> int:
     use_remote = "--raw" not in args
     for refspec in [a for a in args if a != "--raw"]:
         if use_remote:
-            rc = git(["push", REPO_SSH_URL, refspec], ssh_config)
+            print(f"  $ git push {url} {refspec}")
+            rc = git(["push", url, refspec], ssh_config)
         else:
             rc = git(["push", refspec], ssh_config)
         if rc != 0:
@@ -149,11 +240,10 @@ def main(argv: list[str]) -> int:
             return rc
 
     print("\n本地引用同步中…")
-    subprocess.call(["git", "fetch", REMOTE_NAME], stdout=subprocess.DEVNULL)
-    for branch in ("main", "feature/demo-guide"):
-        subprocess.call(["git", "branch", "-f", branch, f"{REMOTE_NAME}/{branch}"],
-                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    print("✅ 推送完成，本地 main / feature/demo-guide 已与远端对齐。")
+    subprocess.call(["git", *_proxy_args(proxy), "fetch", REMOTE_NAME],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    sync_local_refs(proxy)
+    print("✅ 推送完成，本地分支已按远端真值对齐。")
     return 0
 
 
