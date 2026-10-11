@@ -1,397 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>高原气象灾害智能预警 · 气象场可视化</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>牧融绿链 · Polar Operations</title>
 <style>
-  :root{
-    --bg:#0b1220; --panel:#121b2e; --panel-2:#0f1728; --line:#22304d;
-    --ink:#e8eefb; --ink-2:#9db0d0; --ink-3:#6b7ea0;
-    --hot:#ff5b4a; --warm:#ffb020; --cool:#31c9a3; --cold:#4aa3ff; --violet:#9d6bff;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 700px at 15% -10%,#16233c 0%,var(--bg) 55%);
-    color:var(--ink); font:14px/1.65 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-    min-height:100vh}
-  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
-    padding:16px 22px;border-bottom:1px solid var(--line);
-    background:linear-gradient(90deg,#0e1728 0%,#132039 60%,#0e1728 100%)}
-  header h1{font-size:19px;margin:0;letter-spacing:.02em;font-weight:600}
-  header h1 small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:400;letter-spacing:.06em;margin-top:2px}
-  .spacer{flex:1}
-  select,button{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);
-    border-radius:8px;padding:7px 12px;font-size:13px;font-family:inherit;cursor:pointer}
-  button:hover{border-color:#3a5285}
-  button.primary{background:#1c3f7a;border-color:#2b5cab}
-  .status{font-size:12px;color:var(--ink-2)}
-  .wrap{display:grid;grid-template-columns:1.45fr 1fr;gap:14px;padding:14px 22px 40px;max-width:1560px;margin:0 auto}
-  @media(max-width:1100px){.wrap{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-  .card h2{font-size:14px;margin:0 0 4px;font-weight:600;letter-spacing:.03em;
-    display:flex;align-items:center;gap:8px}
-  .card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--cold);box-shadow:0 0 8px var(--cold)}
-  .card .hint{font-size:11.5px;color:var(--ink-3);margin:0 0 10px}
-  .full{grid-column:1/-1}
-  canvas{width:100%;display:block;border-radius:9px;background:#0a1120}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:8px}
-  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-  .chipbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
-  .chip{font-size:11.5px;padding:3px 9px;border:1px solid var(--line);border-radius:20px;
-    color:var(--ink-2);cursor:pointer;user-select:none;background:var(--panel-2)}
-  .chip.on{border-color:#3d6fd0;color:#cfe0ff;background:#16294b}
-  table{border-collapse:collapse;width:100%;font-size:12px}
-  th,td{padding:5px 7px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
-  th{color:var(--ink-2);font-weight:500;text-align:right}
-  td:first-child,th:first-child{text-align:left}
-  .hm{display:grid;gap:2px;grid-template-columns:64px repeat(var(--cols),1fr);align-items:center;font-size:10.5px}
-  .hm .cell{height:19px;border-radius:3px;background:#16233c}
-  .hm .lbl{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bar{display:grid;grid-template-columns:66px 1fr 62px;gap:8px;align-items:center;margin:5px 0;font-size:12px}
-  .bar .track{height:12px;background:#16233c;border-radius:6px;overflow:hidden}
-  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2b5cab,#4aa3ff)}
-  .bar .val{color:var(--ink-2);text-align:right}
-  .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px dashed #1d2a45}
-  .kv span:last-child{color:var(--ink);font-variant-numeric:tabular-nums}
-  .note{font-size:11.5px;color:var(--ink-3);margin-top:9px;line-height:1.6}
-  .err{color:#ff8f80}
+:root{--navy:#172744;--ice:#f4f7fb;--paper:#fff;--line:#dce5f0;--ink:#17243a;--muted:#65758d;--blue:#2d6cdf;--teal:#0d9b91;--coral:#e86652;--amber:#d99321;--shadow:0 10px 28px rgba(31,52,83,.08)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ice);color:var(--ink);font:14px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}button,select{font:inherit}button{cursor:pointer}.shell{display:grid;grid-template-columns:246px 1fr;min-height:100vh}.sidebar{background:var(--navy);color:#e9f0fa;padding:28px 18px;display:flex;flex-direction:column;gap:28px;position:sticky;top:0;height:100vh}.brand{display:flex;gap:11px;align-items:center;padding:0 9px}.mark{width:34px;height:34px;border:1px solid #89b9ee;border-radius:10px;display:grid;place-items:center;color:#bfe1ff;font-weight:800;letter-spacing:-2px}.brand strong{font-size:15px;display:block}.brand small{display:block;color:#9fb1cd;font-size:10px;letter-spacing:.08em}.nav-label{font-size:10px;color:#8ea5c6;letter-spacing:.12em;padding:0 10px;margin:0 0 8px}.nav a{display:flex;align-items:center;gap:10px;color:#b9c9df;text-decoration:none;padding:10px;border-radius:8px;margin:2px 0}.nav a:hover,.nav a.active{background:#2a4167;color:#fff}.nav a span:first-child{width:20px;text-align:center;color:#8ec5ee}.side-note{margin-top:auto;border:1px solid #345078;border-radius:10px;padding:13px;color:#a9bbd4;font-size:11px}.side-note b{color:#fff;display:block;margin-bottom:4px}.main{min-width:0}.topbar{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 32px;gap:16px;position:sticky;top:0;z-index:5}.topbar h1{font-size:17px;margin:0}.topbar h1 small{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.select,.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:8px 11px}.btn:hover{border-color:#8eb2e8}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 4px 10px rgba(45,108,223,.18)}.content{max-width:1540px;margin:0 auto;padding:28px 32px 64px}.eyebrow{font-size:11px;color:var(--blue);font-weight:700;letter-spacing:.14em;text-transform:uppercase}.hero{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:22px}.hero h2{font-size:28px;line-height:1.2;margin:6px 0}.hero p{color:var(--muted);margin:0}.fresh{font-size:11px;color:var(--muted);text-align:right}.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:20px}.panel h3{font-size:15px;margin:0}.panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.panel-title p{font-size:11px;color:var(--muted);margin:3px 0 0}.grid-hero{display:grid;grid-template-columns:minmax(280px,1.25fr) repeat(4,minmax(150px,1fr));gap:12px;margin-bottom:14px}.priority{background:var(--navy);color:#fff;border-radius:12px;padding:20px;min-height:158px;position:relative;overflow:hidden}.priority:after{content:"";position:absolute;width:160px;height:160px;border:1px solid rgba(164,210,255,.2);border-radius:50%;right:-52px;top:-58px}.priority .eyebrow{color:#9ed4ff}.priority h3{font-size:25px;margin:9px 0 3px}.priority p{color:#aec0d9;margin:0;font-size:12px}.priority-score{position:absolute;right:20px;bottom:17px;text-align:right}.priority-score strong{font-size:36px;letter-spacing:-.04em}.priority-score small{display:block;color:#a8c3e2;font-size:10px}.metric{min-height:158px;padding:17px 16px;border-radius:12px;background:#fff;border:1px solid var(--line)}.metric label{display:block;color:var(--muted);font-size:11px}.metric strong{display:block;font-size:23px;margin:14px 0 8px;letter-spacing:-.03em}.metric small{font-size:11px;color:var(--muted)}.metric.teal strong{color:var(--teal)}.metric.coral strong{color:var(--coral)}.metric.amber strong{color:var(--amber)}.metric.blue strong{color:var(--blue)}.section{margin-top:14px}.workflow{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px}.queue{padding:0;overflow:hidden}.queue-head{padding:18px 20px;border-bottom:1px solid var(--line)}.queue-row{display:grid;grid-template-columns:28px minmax(100px,1fr) 74px 78px;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-bottom:1px solid #edf1f6;background:#fff;padding:13px 20px;color:var(--ink)}.queue-row:hover,.queue-row.selected{background:#f0f6ff}.rank{font-size:17px;font-weight:700;color:#9bacbf}.county{font-weight:700}.county small{display:block;color:var(--muted);font-size:10px;font-weight:400}.score{font-variant-numeric:tabular-nums;font-weight:700}.badge{display:inline-flex;justify-content:center;border-radius:99px;padding:4px 7px;font-size:10px;white-space:nowrap}.badge.risk{background:#fff0ed;color:#c34f3c}.badge.review{background:#fff7e5;color:#a86f12}.badge.ok{background:#e8f7f5;color:#087b73}.evidence{min-height:100%}.evidence-top{display:flex;justify-content:space-between;align-items:start;border-bottom:1px solid var(--line);padding-bottom:13px}.evidence-top h3{font-size:20px;margin:3px 0}.evidence-top p{margin:0;color:var(--muted);font-size:11px}.score-ring{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--coral) var(--score,40%),#edf1f6 0);position:relative}.score-ring:after{content:"";position:absolute;inset:7px;background:#fff;border-radius:50%}.score-ring b{position:relative;z-index:1;font-size:16px}.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:16px 0}.phase{border-left:3px solid #a9c4e8;background:#f7f9fc;padding:9px}.phase.active{border-color:var(--coral);background:#fff5f2}.phase strong{display:block;font-size:11px}.phase span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.fact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.fact{border:1px solid var(--line);border-radius:8px;padding:9px 10px}.fact label{display:block;color:var(--muted);font-size:10px}.fact b{font-size:13px;display:block;margin-top:3px}.fact em{display:block;color:var(--muted);font-style:normal;font-size:10px}.steps{counter-reset:step;display:grid;gap:8px}.step{display:grid;grid-template-columns:24px 1fr auto;gap:9px;align-items:start;padding:9px;background:#f8fafc;border-radius:8px}.step:before{counter-increment:step;content:counter(step);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#e7eef9;color:var(--blue);font-weight:700;font-size:11px}.step label{font-weight:600;font-size:12px}.step small{display:block;color:var(--muted);font-size:10px}.step input{accent-color:var(--blue);margin-top:4px}.step-status{border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-size:10px;padding:4px 6px}.step-status.done{background:#e8f7f5;border-color:#b9e5df;color:#087b73}.action-list{display:grid;gap:8px}.action{border-left:3px solid var(--teal);background:#f1faf9;padding:10px 12px}.action b{display:block;font-size:12px}.action span{font-size:11px;color:#53657c}.report-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.quality{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.quality-item{border:1px solid var(--line);border-radius:8px;padding:10px}.quality-item label{display:block;font-size:10px;color:var(--muted)}.quality-item strong{display:block;font-size:16px;margin:4px 0}.quality-item small{display:block;font-size:10px;color:var(--muted)}.bars{display:grid;gap:8px}.bar{display:grid;grid-template-columns:72px 1fr 46px;align-items:center;gap:8px;font-size:11px}.track{height:8px;border-radius:10px;background:#edf1f6;overflow:hidden}.fill{height:100%;background:var(--blue);border-radius:10px}.heat{display:grid;grid-template-columns:84px repeat(12,1fr);gap:3px;overflow:auto}.heat span{height:17px;border-radius:3px;background:#eef2f7}.heat .label{font-size:10px;color:var(--muted);line-height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.table-wrap{overflow:auto;max-height:390px}.table{border-collapse:collapse;width:100%;font-size:11px}.table th,.table td{padding:9px 8px;border-bottom:1px solid #edf1f6;text-align:right;white-space:nowrap}.table th{color:var(--muted);font-weight:600;position:sticky;top:0;background:#fff}.table th:first-child,.table td:first-child{text-align:left}.empty{color:var(--muted);font-size:12px;padding:14px 0}.error{color:var(--coral)}.disclaimer{border-left:3px solid var(--amber);background:#fffaf0;padding:11px 13px;color:#775a22;font-size:11px;margin-top:14px}footer{color:#8391a5;font-size:11px;padding:18px 0;text-align:center}@media(max-width:1180px){.grid-hero{grid-template-columns:repeat(3,1fr)}.priority{grid-column:span 3}.workflow{grid-template-columns:1fr 1fr}.evidence{grid-column:span 2}.report-grid{grid-template-columns:1fr}}@media(max-width:720px){.shell{display:block}.sidebar{height:auto;position:static;padding:14px 16px;display:block}.brand{display:inline-flex;margin-bottom:12px}.nav{display:flex;gap:4px;overflow:auto}.nav-label,.side-note{display:none}.nav a{white-space:nowrap;padding:8px}.topbar{height:auto;padding:12px 16px;align-items:flex-start;flex-wrap:wrap}.topbar h1{font-size:15px;width:100%}.top-actions{margin-left:0;width:100%;justify-content:space-between}.content{padding:20px 14px 40px}.hero{display:block}.hero h2{font-size:23px}.fresh{text-align:left;margin-top:7px}.grid-hero,.workflow,.report-grid{grid-template-columns:1fr}.priority{grid-column:auto}.evidence{grid-column:auto}.quality{grid-template-columns:repeat(2,1fr)}.queue-row{grid-template-columns:24px minmax(90px,1fr) 60px 62px;padding:12px 14px}.timeline{grid-template-columns:repeat(2,1fr)}.heat{grid-template-columns:72px repeat(12,20px)}}
+.metrics-top{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:12px;margin-top:14px}.metrics-top .metric{min-height:112px}.metrics-top .metric strong{margin:10px 0 4px}@media(max-width:720px){.metrics-top{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<header>
-  <h1>高原气象灾害智能预警<small>TP-STNet · 气象场时空可视化 / 通道归因 / 注意力分布</small></h1>
-  <div class="spacer"></div>
-  <select id="monthSel" title="选择月份"></select>
-  <button class="primary" id="reload">刷新</button>
-  <span class="status" id="status">加载中…</span>
-</header>
-
-<div class="wrap">
-  <div class="card">
-    <h2><span class="dot"></span>近地面气温场 · 等温线 · 风场</h2>
-    <p class="hint">26 个县为点位观测；面状场由反距离加权（IDW，p=2）插值生成，<b>且仅在有观测支撑的范围内着色</b>——
-      离最近观测点超过 170 km 的格子留空，不做凭空外推。插值仅用于可视化，不参与任何指标计算。</p>
-    <canvas id="cTemp" height="430"></canvas>
-    <div class="legend">
-      <span><i style="background:#4aa3ff"></i>-30℃</span>
-      <span><i style="background:#31c9a3"></i>-10℃</span>
-      <span><i style="background:#ffb020"></i>0℃</span>
-      <span><i style="background:#ff5b4a"></i>10℃+</span>
-      <span style="color:#8fa4c8">→ 箭头长度 = 风速（m/s）</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2><span class="dot" style="background:#ffb020;box-shadow:0 0 8px #ffb020"></span>模型风险场</h2>
-    <p class="hint">TP-STNet 输出风险概率，按月刷新。色斑为 IDW 插值，圆点为县中心实测点位。</p>
-    <canvas id="cRisk" height="430"></canvas>
-    <div class="legend">
-      <span><i style="background:#31c9a3"></i>相对低</span>
-      <span><i style="background:#ffb020"></i>低</span>
-      <span><i style="background:#ff7a3d"></i>中</span>
-      <span><i style="background:#ff5b4a"></i>相对高</span>
-    </div>
-    <p class="note" id="riskScale"></p>
-    <p class="note">26 个县近似沿高原东南缘呈<b>带状分布</b>（近似共线），因此有观测支撑的区域本身就是一个斜带，
-      带外留空是刻意的——不做无观测支撑的外推。这也意味着「面状色斑」对这份点位数据只是示意，
-      定量结论应看下方明细表。</p>
-  </div>
-
-  <div class="card">
-    <h2><span class="dot" style="background:#9d6bff;box-shadow:0 0 8px #9d6bff"></span>通道归因（点击地图上的县）</h2>
-    <p class="hint" id="attrWho">—</p>
-    <div id="attrBars"><p class="note">正在加载…</p></div>
-    <div id="attrMeta"></div>
-    <p class="note">
-      方法：<b>通道遮挡</b>——把该通道在整个回看窗口上置零，测风险下降幅度。
-      语义是「模型对该通道的依赖度」，不是因果贡献。负值表示该通道信息被移除后风险反而上升。
-    </p>
-  </div>
-
-  <div class="card">
-    <h2><span class="dot" style="background:#31c9a3;box-shadow:0 0 8px #31c9a3"></span>跨模态注意力（时间维）</h2>
-    <p class="hint">行 = 县，列 = 回看窗口内的月份。颜色越亮表示模型在该时段的注意力权重越高。</p>
-    <div class="hm" id="heat"></div>
-    <p class="note">注意力只反映模型关注哪些时段，不等同因果归因。</p>
-  </div>
-
-  <div class="card full">
-    <h2><span class="dot" style="background:#4aa3ff;box-shadow:0 0 8px #4aa3ff"></span>26 县气象与风险明细</h2>
-    <p class="hint">风速已由 km/h 换算为 m/s；雪深已由米换算为厘米。单位以接口自报值为准。</p>
-    <div style="max-height:340px;overflow:auto">
-      <table id="tbl">
-        <thead><tr>
-          <th>县</th><th>气温℃</th><th>最低℃</th><th>降水mm</th><th>降雪cm</th><th>雪深cm</th>
-          <th>辐射MJ/m²</th><th>风速m/s</th><th>风向°</th><th>湿度%</th><th>风险</th><th>等级</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
+<div class="shell"><aside class="sidebar"><div class="brand"><div class="mark">牧<br>融</div><div><strong>牧融绿链</strong><small>POLAR OPERATIONS</small></div></div><nav class="nav"><p class="nav-label">气象研判</p><a class="active" href="#overview"><span>01</span>风险总览</a><a href="#evidence"><span>02</span>证据回溯</a><a href="#review"><span>03</span>人工核查</a><a href="#action"><span>04</span>牧区处置</a><p class="nav-label" style="margin-top:20px">模型与数据</p><a href="#metrics"><span>05</span>评估可信度</a><a href="#reports"><span>06</span>气象报告</a></nav><div class="side-note"><b>当前口径</b>风险分数用于核查优先级，不等同已确认灾情或灾害发生概率。来源不完整时保持待核查。</div></aside>
+<main class="main"><header class="topbar"><h1>气象风险运营台 <small>高原牧区 · 证据链工作台</small></h1><div class="top-actions"><select id="month" class="select" aria-label="选择月份"></select><button id="refresh" class="btn primary">刷新数据</button><span id="loadState" class="fresh">准备加载</span></div></header><div class="content">
+<section id="overview" class="hero"><div><div class="eyebrow">AIC METEO INTELLIGENCE</div><h2>先看哪里，再回到证据</h2><p>风险排序 → 证据回溯 → 人工核查 → 牧区处置建议</p></div><div id="freshAt" class="fresh">数据状态：读取中</div></section>
+<section class="grid-hero"><article class="priority"><div class="eyebrow">本月优先县域</div><h3 id="priorityName">加载中</h3><p id="priorityMeta">模型排序尚未完成</p><div class="priority-score"><strong id="priorityScore">--</strong><small>模型风险分数</small></div></article><article class="metric blue"><label>验证集运营阈值</label><strong id="threshold">未配置</strong><small>禁止用测试集调阈值</small></article><article class="metric teal"><label>数据质量</label><strong id="dataQuality">--</strong><small id="qualityNote">观测覆盖读取中</small></article><article class="metric coral"><label>证据置信度</label><strong id="evidenceConfidence">待核查</strong><small>未确认记录不等于无灾</small></article><article class="metric amber"><label>Hit@3 / Hit@5</label><strong id="hitMetric">未接入</strong><small>需要事件登记与评估接口</small></article></section>
+<section class="metrics-top"><article class="metric amber"><label>Recall@K</label><strong>未接入</strong><small>待 event_id 对齐</small></article><article class="metric blue"><label>提前量</label><strong>未接入</strong><small>需要事件发生月</small></article></section>
+<section id="metrics" class="panel section"><div class="panel-title"><div><h3>评估可信度</h3><p>当前页面只展示已接入的真实接口；缺少事件键、验证集阈值或回放结果时保留不可用状态。</p></div><span class="badge review">不把缺失当 0</span></div><div class="quality"><div class="quality-item"><label>Recall@K</label><strong id="recallMetric">未接入</strong><small>待 event_id 对齐</small></div><div class="quality-item"><label>事件命中率</label><strong id="eventMetric">未接入</strong><small>待起止月份与县域确认</small></div><div class="quality-item"><label>提前量</label><strong id="leadMetric">未接入</strong><small>需要事件发生月</small></div><div class="quality-item"><label>PR-AUC</label><strong id="prMetric">未接入</strong><small>不可用时不展示伪精度</small></div></div></section>
+<section class="workflow section"><article class="panel queue" id="queue"><div class="queue-head"><div class="panel-title" style="margin:0"><div><h3>风险队列</h3><p>按模型分数排序，候选项均需人工核查</p></div><span id="queueCount" class="badge review">--</span></div></div><div id="queueRows"><div class="empty">正在读取风险排序…</div></div></article><article class="panel evidence" id="evidence"><div class="panel-title"><div><h3>证据回溯</h3><p>点击左侧县域，查看气象过程、遥感质量和来源状态</p></div><span id="evidenceStatus" class="badge review">待核查</span></div><div class="evidence-top"><div><div class="eyebrow">SELECTED REGION</div><h3 id="selectedName">尚未选择</h3><p id="selectedSub">风险队列加载后可查看证据</p></div><div id="scoreRing" class="score-ring"><b id="selectedScore">--</b></div></div><div class="timeline"><div class="phase active"><strong>气象过程</strong><span id="weatherSignal">读取中</span></div><div class="phase"><strong>植被响应</strong><span id="ndviSignal">质量掩码待接入</span></div><div class="phase"><strong>同比对照</strong><span id="yoySignal">可用性待接入</span></div><div class="phase"><strong>来源登记</strong><span id="sourceSignal">未确认</span></div></div><div class="fact-grid"><div class="fact"><label>温度 / 最低温</label><b id="tempFact">--</b><em>来自月度气象字段</em></div><div class="fact"><label>降水 / 降雪</label><b id="precipFact">--</b><em>不以 0 填充缺失</em></div><div class="fact"><label>NDVI 质量掩码</label><b id="ndviFact">未接入</b><em>遥感来源需补登记</em></div><div class="fact"><label>气候历史年数</label><b id="climateFact">未接入</b><em>历史窗口未随接口返回</em></div></div></article><article class="panel" id="review"><div class="panel-title"><div><h3>人工核查</h3><p>勾选后只记录本机浏览器状态，不能替代正式登记</p></div><span id="reviewState" class="badge review">待处理</span></div><div class="steps"><div class="step"><input type="checkbox" data-check="weather"><div><label>确认气象过程</label><small>核对连续寒冷、降雪、骤降等过程信号</small></div><button class="step-status" data-status="weather">待核查</button></div><div class="step"><input type="checkbox" data-check="remote"><div><label>复核遥感质量</label><small>确认 NDVI 质量掩码与同比可用性</small></div><button class="step-status" data-status="remote">待核查</button></div><div class="step"><input type="checkbox" data-check="event"><div><label>登记事件来源</label><small>补充 event_id、起止月份、影响县域和来源</small></div><button class="step-status" data-status="event">待核查</button></div><div class="step"><input type="checkbox" data-check="disposition"><div><label>确认牧区建议</label><small>联系村级人员并记录饲草、保暖和转场需求</small></div><button class="step-status" data-status="disposition">待核查</button></div></div><button id="saveReview" class="btn primary" style="width:100%;margin-top:14px">保存本次核查状态</button></article></section>
+<section id="action" class="panel section"><div class="panel-title"><div><h3>牧区处置建议</h3><p>建议只描述可执行动作，不把候选风险写成已确认灾情</p></div><span class="badge review">人工确认后执行</span></div><div class="action-list"><div class="action"><b>01 · 先补证据</b><span>核对气象站观测、遥感质量掩码和事件登记；证据不足时维持“待核查”。</span></div><div class="action"><b>02 · 再看过程</b><span>重点询问连续寒冷、连续降雪、温度骤降及饲草供给变化，记录时间范围。</span></div><div class="action"><b>03 · 最后处置</b><span>根据核查结果安排保暖、饲草调度、转场或贷后回访，保留联系人和回执。</span></div></div></section>
+<section id="reports" class="report-grid section"><article class="panel"><div class="panel-title"><div><h3>通道归因</h3><p>模型对当前县域的输入依赖，不是因果证明</p></div><span id="attrBadge" class="badge review">选择县域后加载</span></div><div id="attrBars" class="bars"><div class="empty">选择风险队列中的县域后加载</div></div><div id="attrNote" class="disclaimer">归因接口不可用时保持空态，不用 0 代替真实观测或贡献。</div></article><article class="panel"><div class="panel-title"><div><h3>风险趋势</h3><p>模型输出与未来严重度头，不等同灾情确认</p></div><span class="badge review">解释性参考</span></div><div id="trendBars" class="bars"><div class="empty">选择县域后加载</div></div><div class="disclaimer">风险分数未经校准，页面只用于安排核查顺序。</div></article></section>
+<section class="panel section"><div class="panel-title"><div><h3>跨模态注意力</h3><p>模型关注的时间片，不能当作事件发生时间</p></div><span id="heatMonth" class="badge review">读取中</span></div><div id="heat" class="heat"><div class="empty">正在读取注意力数据…</div></div></section>
+<section class="panel section"><div class="panel-title"><div><h3>月度气象报告</h3><p>26 个县的观测字段；接口缺失时显示不可用</p></div><span id="fieldMonth" class="badge review">读取中</span></div><div class="table-wrap"><table class="table"><thead><tr><th>县域</th><th>温度 °C</th><th>最低 °C</th><th>降水 mm</th><th>降雪 cm</th><th>雪深 cm</th><th>风速 m/s</th><th>湿度 %</th><th>风险</th></tr></thead><tbody id="fieldRows"><tr><td colspan="9" class="empty">正在读取月度字段…</td></tr></tbody></table></div></section><div class="disclaimer"><b>数据边界：</b>本页展示 TP-STNet 风险排序与公开气象字段。模型风险分数不是灾害发生概率；“待核查”不等于无灾；NDVI、同比、气候历史、事件命中率和提前量没有真实接口结果时不渲染数字。</div><footer>牧融绿链 · Polar Operations · 仅使用本地项目接口，无新增外部依赖</footer>
+</div></main></div>
 <script>
-const $ = id => document.getElementById(id);
-const API = '/api/deep';
-let FIELDS = null, RISK = null, ATTN = null, MONTH = null;
-
-const PAL = {
-  risk: [[0,'#31c9a3'],[0.45,'#ffb020'],[0.7,'#ff7a3d'],[1,'#ff5b4a']],
-  temp: [[0,'#4aa3ff'],[0.35,'#31c9a3'],[0.6,'#ffb020'],[1,'#ff5b4a']]
-};
-function ramp(stops, t){
-  t = Math.max(0, Math.min(1, t));
-  for (let i=0;i<stops.length-1;i++){
-    const [a,ca]=stops[i], [b,cb]=stops[i+1];
-    if (t<=b){ const k=(t-a)/Math.max(1e-6,b-a); return mix(ca,cb,k); }
-  }
-  return stops[stops.length-1][1];
-}
-function mix(c1,c2,k){
-  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-  const [r1,g1,b1]=p(c1), [r2,g2,b2]=p(c2);
-  return `rgb(${Math.round(r1+(r2-r1)*k)},${Math.round(g1+(g2-g1)*k)},${Math.round(b1+(b2-b1)*k)})`;
-}
-
-async function jget(u){ const r = await fetch(u); if(!r.ok) throw new Error(u+' → '+r.status); return r.json(); }
-
-function project(regs, W, H, pad){
-  const lons = regs.map(r=>r.longitude), lats = regs.map(r=>r.latitude);
-  const x0=Math.min(...lons), x1=Math.max(...lons), y0=Math.min(...lats), y1=Math.max(...lats);
-  const sx = (W-pad*2)/Math.max(1e-6,(x1-x0)), sy = (H-pad*2)/Math.max(1e-6,(y1-y0));
-  const s = Math.min(sx, sy);
-  const ox = (W - (x1-x0)*s)/2, oy = (H - (y1-y0)*s)/2;
-  // 把像素/度换算成像素/公里（纬度 1°≈111km），供距离掩膜使用
-  const pxPerKm = s / 111.0;
-  const pts = regs.map(r=>({
-    ...r,
-    px: ox + (r.longitude-x0)*s,
-    py: H - (oy + (r.latitude-y0)*s)      // 纬度向上
-  }));
-  pts.forEach(p=>p.pxPerKm = pxPerKm);
-  return pts;
-}
-
-/* IDW 插值到网格并着色。
-   ⚠️ 带**距离掩膜**：离最近观测点超过 SUPPORT_KM 的格子不着色。
-   26 个县是稀疏点位，覆盖不到的地方硬插值等于凭空造数据 —— 留空比造色斑诚实。 */
-const SUPPORT_KM = 170;
-function drawField(canvas, pts, valueOf, colorOf, drawContours, range){
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.clientWidth, H = parseInt(canvas.getAttribute('height'),10);
-  canvas.width = W*dpr; canvas.height = H*dpr;
-  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,W,H);
-  if (!pts.length) return;
-  const pxPerKm = pts.pxPerKm || 1;
-  const lim = (SUPPORT_KM * pxPerKm) ** 2;
-
-  const STEP = 6, power = 2;
-  const gw = Math.ceil(W/STEP), gh = Math.ceil(H/STEP);
-  const img = ctx.createImageData(gw, gh);
-  for (let gx=0, i=0; gx<W; gx+=STEP){
-    for (let gy=0; gy<H; gy+=STEP, i++){
-      let num=0, den=0, nearest=Infinity;
-      for (const p of pts){
-        const dx=gx-p.px, dy=gy-p.py, d2=dx*dx+dy*dy;
-        if (d2 < nearest) nearest = d2;
-        if (d2 < 1){ num = valueOf(p); den = 1; break; }
-        const w = 1/Math.pow(d2, power/2);
-        num += w*valueOf(p); den += w;
-      }
-      // 软衰减而非硬切：硬切会在支撑带边缘切出「梳齿」伪影（26 县近似共线，支撑区是窄带）
-      const dKm = Math.sqrt(nearest) / pxPerKm;
-      const a = Math.max(0, Math.min(1, (SUPPORT_KM - dKm) / (SUPPORT_KM * 0.45)));
-      if (a <= 0.02){ img.data[i*4+3] = 0; continue; }        // 无观测支撑 → 透明
-      const v = den>0 ? num/den : 0;
-      const c = colorOf(v, range);
-      img.data[i*4]=c[0]; img.data[i*4+1]=c[1]; img.data[i*4+2]=c[2]; img.data[i*4+3]=Math.round(228*a);
-    }
-  }
-  const off = document.createElement('canvas');
-  off.width = gw; off.height = gh;
-  off.getContext('2d').putImageData(img,0,0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(off, 0, 0, W, H);
-
-  if (drawContours) contour(ctx, pts, valueOf, W, H, STEP, lim);
-
-  ctx.font = '10px ui-sans-serif,system-ui'; ctx.textAlign='center';
-  for (const p of pts){
-    ctx.beginPath(); ctx.arc(p.px, p.py, 3, 0, Math.PI*2);
-    ctx.fillStyle = '#eaf2ff'; ctx.fill();
-    ctx.strokeStyle = 'rgba(10,17,32,.85)'; ctx.lineWidth = 1.5; ctx.stroke();
-  }
-}
-
-/* 简易等值线：对 2℃ 倍数的等值线做点采样（只求视觉可读，不追求严格等值线追踪）。
-   同样受距离掩膜约束 —— 没有观测支撑的地方不画线。 */
-function contour(ctx, pts, valueOf, W, H, STEP, lim){
-  const levels = [-30,-25,-20,-15,-10,-5,0,5,10,15,20];
-  const gw = Math.ceil(W/STEP), gh = Math.ceil(H/STEP);
-  const G = [];
-  for (let xi=0; xi<gw; xi++){ const col=[];
-    for (let yi=0; yi<gh; yi++){
-      const x=xi*STEP, y=yi*STEP;
-      let num=0,den=0,nearest=Infinity;
-      for (const p of pts){ const dx=x-p.px,dy=y-p.py,d2=dx*dx+dy*dy;
-        if(d2<nearest)nearest=d2;
-        if(d2<1){num=valueOf(p);den=1;break;} const w=1/d2; num+=w*valueOf(p); den+=w; }
-      col.push((lim && nearest>lim) ? null : (den?num/den:0));
-    }
-    G.push(col);
-  }
-  ctx.strokeStyle='rgba(255,255,255,.42)'; ctx.lineWidth=1;
-  for (const L of levels){
-    ctx.beginPath();
-    for (let xi=0; xi<gw-1; xi++) for (let yi=0; yi<gh-1; yi++){
-      const a=G[xi][yi], b=G[xi+1][yi], c=G[xi][yi+1], d=G[xi+1][yi+1];
-      if (a===null||b===null||c===null||d===null) continue;
-      const mn=Math.min(a,b,c,d), mx=Math.max(a,b,c,d);
-      if (L>=mn && L<=mx && mx-mn>1e-6){
-        ctx.moveTo(xi*STEP, yi*STEP);
-        ctx.arc(xi*STEP, yi*STEP, 1.1, 0, Math.PI*2);
-      }
-    }
-    ctx.stroke();
-  }
-}
-
-function drawWind(canvas, pts){
-  const ctx = canvas.getContext('2d');
-  const W = canvas.clientWidth;
-  ctx.save();
-  for (const p of pts){
-    const sp = p.wind_speed_ms || 0, dir = (p.wind_dir_deg||0) * Math.PI/180;
-    const len = 6 + sp*3.4;
-    // 气象风向：风的来向；箭头指向去向 → 加 π
-    const a = dir + Math.PI;
-    const x2 = p.px + Math.cos(a)*len, y2 = p.py - Math.sin(a)*len;
-    ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(x2, y2);
-    ctx.strokeStyle = 'rgba(180,215,255,.95)'; ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x2,y2);
-    ctx.lineTo(x2 - Math.cos(a-0.42)*5, y2 + Math.sin(a-0.42)*5);
-    ctx.lineTo(x2 - Math.cos(a+0.42)*5, y2 + Math.sin(a+0.42)*5);
-    ctx.closePath(); ctx.fillStyle='rgba(180,215,255,.95)'; ctx.fill();
-  }
-  ctx.restore();
-}
-
-function renderHeat(){
-  const cols = ATTN.lookback_months.length;
-  const box = $('heat');
-  box.style.setProperty('--cols', cols);
-  let mx = 0; ATTN.attention.forEach(r=>r.forEach(v=>mx=Math.max(mx,v)));
-  let html = '<div class="lbl"></div>' + ATTN.lookback_months.map(m=>`<div class="lbl" style="text-align:center">${m.slice(2)}</div>`).join('');
-  ATTN.attention.forEach((row,i)=>{
-    const nm = (FIELDS.regions.find(r=>r.region_id===ATTN.regions[i])||{}).region_name || ATTN.regions[i];
-    html += `<div class="lbl" title="${nm}">${nm}</div>`;
-    row.forEach(v=>{
-      const t = mx>0 ? v/mx : 0;
-      html += `<div class="cell" title="${(t*100).toFixed(1)}%" style="background:${mix('#16233c','#31c9a3',Math.pow(t,.7))}"></div>`;
-    });
-  });
-  box.innerHTML = html;
-}
-
-async function loadAttr(rid){
-  try{
-    const a = await jget(`${API}/attribution/${encodeURIComponent(rid)}?month=${MONTH}`);
-    $('attrWho').innerHTML = `<b>${a.region_name}</b> · ${a.month} · 风险 ${a.risk_score}（${a.risk_level}）`;
-    const mx = Math.max(...a.channel_attribution.map(c=>Math.abs(c.risk_drop)), 1e-6);
-    $('attrBars').innerHTML = a.channel_attribution.map(c=>{
-      const w = Math.abs(c.risk_drop)/mx*100;
-      const col = c.risk_drop>=0 ? 'linear-gradient(90deg,#2b5cab,#4aa3ff)'
-                                 : 'linear-gradient(90deg,#7a3030,#ff8f80)';
-      return `<div class="bar"><span>${c.channel}</span>
-        <span class="track"><span class="fill" style="width:${w}%;background:${col}"></span></span>
-        <span class="val">${c.risk_drop>=0?'+':''}${c.risk_drop.toFixed(3)}</span></div>`;
-    }).join('');
-    const p = a.physics_residual;
-    $('attrMeta').innerHTML = `<div class="kv"><span>递减率残差（℃²，越小越符合物理）</span>
-      <span>${p.lapse_rate_residual_c2.toFixed(2)}</span></div>`;
-  }catch(e){ $('attrBars').innerHTML = `<p class="note err">归因加载失败：${e.message}</p>`; }
-}
-
-function renderTable(){
-  const byId = {}; (RISK.regions||[]).forEach(r=>byId[r.region_id]=r);
-  const rows = FIELDS.regions.map(f=>{
-    const k = byId[f.region_id] || {};
-    return `<tr data-id="${f.region_id}" style="cursor:pointer">
-      <td>${f.region_name}</td><td>${f.temperature_c}</td><td>${f.temperature_min_c}</td>
-      <td>${f.precipitation_mm}</td><td>${f.snowfall_cm}</td><td>${f.snow_depth_cm}</td>
-      <td>${f.radiation_mj}</td><td>${f.wind_speed_ms}</td><td>${f.wind_dir_deg}</td><td>${f.humidity_pct}</td>
-      <td>${k.risk_score!==undefined?k.risk_score:'—'}</td><td>${k.risk_level||'—'}</td></tr>`;
-  }).join('');
-  const tb = $('tbl').querySelector('tbody'); tb.innerHTML = rows;
-  tb.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>loadAttr(tr.dataset.id));
-}
-
-async function render(){
-  $('status').textContent = '加载中…'; $('status').className='status';
-  try{
-    if (!MONTH) MONTH = (await jget(`${API}/risk`)).month;
-    [FIELDS, RISK, ATTN] = await Promise.all([
-      jget(`${API}/fields?month=${MONTH}`),
-      jget(`${API}/risk?month=${MONTH}`),
-      jget(`${API}/attention?month=${MONTH}`)
-    ]);
-    const byId = {}; RISK.regions.forEach(r=>byId[r.region_id]=r);
-    const pts = project(FIELDS.regions, $('cTemp').clientWidth, 430, 34)
-                  .map(p=>({...p, risk:(byId[p.region_id]||{}).risk_score||0}));
-
-    const tMin = Math.min(...FIELDS.regions.map(r=>r.temperature_c));
-    const tMax = Math.max(...FIELDS.regions.map(r=>r.temperature_c));
-    drawField($('cTemp'), pts, p=>p.temperature_c,
-      (v, rg)=>{ const t=((v-rg.min)/Math.max(1e-6,rg.max-rg.min)); const c=ramp(PAL.temp,t);
-           const q=c.match(/\d+/g); return [+q[0],+q[1],+q[2]]; }, true, {min:tMin, max:tMax});
-    drawWind($('cTemp'), pts);
-
-    // 风险值当月集中在很窄的区间（约 0.33~0.41），用固定刻度会全是一个颜色。
-    // 因此按**当月 min-max 归一化**着色，并在图上标注是相对刻度。
-    const rVals = pts.map(p=>p.risk);
-    const rMin = Math.min(...rVals), rMax = Math.max(...rVals);
-    drawField($('cRisk'), pts, p=>p.risk,
-      (v, rg)=>{ const t=(v-rg.min)/Math.max(1e-6,rg.max-rg.min); const c=ramp(PAL.risk,t);
-           const q=c.match(/\d+/g); return [+q[0],+q[1],+q[2]]; }, false, {min:rMin, max:rMax});
-    $('riskScale').textContent =
-      `相对刻度：${rMin.toFixed(3)} → ${rMax.toFixed(3)}（当月极差仅 ${(rMax-rMin).toFixed(3)}，`
-      + `绝对值区间见下表；颜色只反映县间相对高低）`;
-
-    renderHeat(); renderTable(); renderTableSel();
-    const top = RISK.regions.slice().sort((a,b)=>b.risk_score-a.risk_score)[0];
-    if (top) loadAttr(top.region_id);
-    $('status').textContent = `${MONTH} · ${FIELDS.n_regions} 县 · 已加载`;
-  }catch(e){
-    $('status').textContent = '加载失败：'+e.message; $('status').className='status err';
-  }
-}
-
-function renderTableSel(){}
-
-(async function init(){
-  try{
-    const r0 = await jget(`${API}/risk`);
-    MONTH = r0.month;
-    // 月份选择器：用元数据里的月份范围生成
-    const st = await jget(`${API}/status`);
-    const [a,b] = st.month_range;
-    const sel = $('monthSel'); sel.innerHTML='';
-    let y=+a.slice(0,4), m=+a.slice(5,7), ey=+b.slice(0,4), em=+b.slice(5,7);
-    const list=[];
-    while (y<ey || (y===ey && m<=em)){ list.push(`${y}-${String(m).padStart(2,'0')}`);
-      m++; if(m>12){m=1;y++;} }
-    list.reverse().forEach(v=>{
-      const o=document.createElement('option'); o.value=v; o.textContent=v;
-      if(v===MONTH) o.selected=true; sel.appendChild(o);
-    });
-    sel.onchange = ()=>{ MONTH = sel.value; render(); };
-  }catch(e){ $('status').textContent = '初始化失败：'+e.message; $('status').className='status err'; }
-  $('reload').onclick = render;
-  window.addEventListener('resize', ()=>{ clearTimeout(window._t); window._t=setTimeout(render,260); });
-  render();
-})();
+const API='/api/deep', $=id=>document.getElementById(id), state={month:null,risk:null,fields:null,attention:null,selected:null,checks:{}};
+const safe=(v,u='')=>(v===null||v===undefined||v===''||Number.isNaN(Number(v)))?'不可用':`${v}${u}`, pct=v=>v===null||v===undefined?'--':`${(Number(v)*100).toFixed(1)}%`, esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+async function get(path){const r=await fetch(`${API}${path}`,{cache:'no-store'});if(!r.ok)throw new Error(`${r.status}`);return r.json()}function showError(id,msg){$(id).innerHTML=`<div class="empty error">${esc(msg)}</div>`}function regionById(id){return(state.risk?.regions||[]).find(r=>r.region_id===id)}function fieldById(id){return(state.fields?.regions||[]).find(r=>r.region_id===id)}
+function fillMonths(s){const el=$("month"),range=s.month_range||[];el.innerHTML='';if(!range.length){el.innerHTML='<option value="">最新可用月份</option>';return}const d0=new Date(range[0]+'-01'),d1=new Date(range[1]+'-01');for(let d=new Date(d0);d<=d1;d.setMonth(d.getMonth()+1)){const v=d.toISOString().slice(0,7),o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)}el.value=range[1]}
+function riskBadge(l){return l==='高'?'risk':l==='中'?'review':'ok'}function renderQueue(){const rows=(state.risk?.regions||[]).slice(0,5);$("queueCount").textContent=`${rows.length||'--'} 个候选`;if(!rows.length){showError('queueRows','风险接口不可用，无法生成队列');return}$("queueRows").innerHTML=rows.map((r,i)=>`<button class="queue-row ${state.selected===r.region_id?'selected':''}" data-region="${esc(r.region_id)}"><span class="rank">0${i+1}</span><span class="county">${esc(r.region_name||r.region_id)}<small>区域输入 · 待核查</small></span><span class="score">${pct(r.risk_score)}</span><span class="badge ${riskBadge(r.risk_level)}">${esc(r.risk_level||'待核查')}</span></button>`).join('');document.querySelectorAll('.queue-row').forEach(b=>b.addEventListener('click',()=>selectRegion(b.dataset.region)))}
+function renderPriority(){const r=regionById(state.selected)||state.risk?.regions?.[0];if(!r)return;state.selected=r.region_id;$("priorityName").textContent=r.region_name||r.region_id;$("priorityMeta").textContent=`${state.risk?.month||'最新可用'} · 排名 01 · 候选风险待核查`;
+$("priorityScore").textContent=pct(r.risk_score);$("selectedName").textContent=r.region_name||r.region_id;$("selectedSub").textContent=`${r.region_id} · ${state.risk?.month||'最新可用'} · 仅作核查排序`;$("selectedScore").textContent=pct(r.risk_score);$("scoreRing").style.setProperty('--score',`${Math.round(Number(r.risk_score||0)*100)}%`);$("evidenceStatus").textContent='待核查';$("evidenceConfidence").textContent='待核查';const f=fieldById(r.region_id);$("tempFact").textContent=f?`${safe(f.temperature_c,' °C')} / ${safe(f.temperature_min_c,' °C')}`:'不可用';$("precipFact").textContent=f?`${safe(f.precipitation_mm,' mm')} / ${safe(f.snowfall_cm,' cm')}`:'不可用';$("weatherSignal").textContent=f?`${safe(f.temperature_min_c,' °C')} · ${safe(f.snowfall_cm,' cm')}`:'不可用';$("ndviSignal").textContent='质量掩码待接入';$("yoySignal").textContent='可用性待接入';$("sourceSignal").textContent='未确认';$("ndviFact").textContent='未接入';$("climateFact").textContent='未接入';renderTrend(r);renderQueue();loadAttribution(r);loadChecks(r.region_id)}
+function renderTrend(r){const vals=(r.horizon_max_severity||[]).filter(v=>v!==null&&v!==undefined);$("trendBars").innerHTML=vals.length?vals.map((v,i)=>`<div class="bar"><span>未来 ${i+1} 期</span><div class="track"><div class="fill" style="width:${Math.max(4,Math.min(100,Number(v)*100))}%"></div></div><b>${Number(v).toFixed(2)}</b></div>`).join(''):'<div class="empty">未来严重度不可用</div>'}
+async function loadAttribution(r){$("attrBadge").textContent='读取中';$("attrBars").innerHTML='<div class="empty">正在读取通道归因…</div>';try{const d=await get(`/attribution/${encodeURIComponent(r.region_id)}?month=${encodeURIComponent(state.month||'')}`),rows=d.channel_attribution||[];$("attrBars").innerHTML=rows.length?rows.map(x=>`<div class="bar"><span>${esc(x.channel)}</span><div class="track"><div class="fill" style="width:${Math.min(100,Math.abs(Number(x.share_pct||0)))}%;background:${Number(x.risk_drop)<0?'var(--amber)':'var(--blue)'}"></div></div><b>${safe(x.share_pct,'%')}</b></div>`).join(''):'<div class="empty">归因不可用</div>';$('attrBadge').textContent='接口返回';$('attrNote').textContent='通道遮挡只表示模型依赖，不构成因果证明。'}catch(e){$('attrBadge').textContent='不可用';showError('attrBars','归因接口不可用，保持待核查状态');$('attrNote').textContent='没有真实归因返回时不展示 0 或替代值。'}}
+function renderFields(){const rows=state.fields?.regions||[];$('fieldMonth').textContent=state.fields?.month||'不可用';if(!rows.length){showError('fieldRows','月度气象字段不可用');return}const rm=new Map((state.risk?.regions||[]).map(r=>[r.region_id,r]));$('fieldRows').innerHTML=rows.map(f=>{const r=rm.get(f.region_id);return `<tr><td>${esc(f.region_name||f.region_id)}</td><td>${safe(f.temperature_c)}</td><td>${safe(f.temperature_min_c)}</td><td>${safe(f.precipitation_mm)}</td><td>${safe(f.snowfall_cm)}</td><td>${safe(f.snow_depth_cm)}</td><td>${safe(f.wind_speed_ms)}</td><td>${safe(f.humidity_pct)}</td><td><span class="badge ${riskBadge(r?.risk_level)}">${r?pct(r.risk_score):'不可用'}</span></td></tr>`}).join('')}
+function renderHeat(){const d=state.attention;if(!d||!d.attention?.length){showError('heat','注意力接口不可用');return}const months=d.lookback_months||[],max=Math.max(...d.attention.flat().map(Number),1e-6);$('heatMonth').textContent=d.month||'不可用';$('heat').innerHTML=`<span></span>${months.map(m=>`<span class="label" title="${esc(m)}">${esc(m.slice(5))}</span>`).join('')}`+(d.regions||[]).slice(0,26).map((rid,i)=>`<span class="label" title="${esc(rid)}">${esc(regionById(rid)?.region_name||rid)}</span>${(d.attention[i]||[]).map(v=>`<span title="${Number(v).toFixed(3)}" style="background:rgba(45,108,223,${Math.max(.08,Number(v)/max)})"></span>`).join('')}`).join('')}
+function loadChecks(id){const raw=localStorage.getItem(`polar-review:${id}`);state.checks=raw?JSON.parse(raw):{};document.querySelectorAll('[data-check]').forEach(x=>x.checked=!!state.checks[x.dataset.check]);document.querySelectorAll('[data-status]').forEach(x=>{const done=!!state.checks[x.dataset.status];x.textContent=done?'已完成':'待核查';x.classList.toggle('done',done)});const n=Object.values(state.checks).filter(Boolean).length;$('reviewState').textContent=n===4?'已完成 4/4':`待处理 ${n}/4`;}document.querySelectorAll('[data-check]').forEach(x=>x.addEventListener('change',()=>{state.checks[x.dataset.check]=x.checked;const b=document.querySelector(`[data-status="${x.dataset.check}"]`);b.textContent=x.checked?'已完成':'待核查';b.classList.toggle('done',x.checked);const n=Object.values(state.checks).filter(Boolean).length;$('reviewState').textContent=n===4?'已完成 4/4':`待处理 ${n}/4`}));$('saveReview').addEventListener('click',()=>{if(!state.selected)return;localStorage.setItem(`polar-review:${state.selected}`,JSON.stringify(state.checks));$('reviewState').textContent='已保存';$('reviewState').className='badge ok'});
+async function selectRegion(id){state.selected=id;renderPriority()}async function load(){$('loadState').textContent='读取中';$('freshAt').textContent='数据状态：读取中';try{const status=await get('/status');fillMonths(status);if(!state.month)state.month=status.month_range?.[1]||'';const q=state.month?`?month=${encodeURIComponent(state.month)}`:'';const out=await Promise.allSettled([get(`/risk${q}`),get(`/fields${q}`),get(`/attention${q}`)]);state.risk=out[0].status==='fulfilled'?out[0].value:null;state.fields=out[1].status==='fulfilled'?out[1].value:null;state.attention=out[2].status==='fulfilled'?out[2].value:null;state.month=state.risk?.month||state.fields?.month||state.month;const fs=state.fields?.regions||[],valid=fs.filter(f=>f.temperature_c!==null&&f.temperature_c!==undefined).length;$('dataQuality').textContent=fs.length?`${Math.round(valid/fs.length*100)}%`:'不可用';$('qualityNote').textContent=fs.length?`${valid}/${fs.length} 县温度字段可用`:'气象接口不可用';renderQueue();renderFields();renderHeat();state.selected=state.selected||state.risk?.regions?.[0]?.region_id;renderPriority();$('loadState').textContent='已更新';$('freshAt').textContent=`数据状态：已读取 · ${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}`}catch(e){$('loadState').textContent='不可用';$('freshAt').textContent='数据状态：接口失败';showError('queueRows','无法连接模型接口，请稍后重试');showError('fieldRows','无法连接气象接口')}}$('month').addEventListener('change',()=>{state.month=$('month').value;load()});$('refresh').addEventListener('click',load);load();
 </script>
 </body>
 </html>

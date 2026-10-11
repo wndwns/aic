@@ -524,3 +524,9 @@ $PY _原型/push_via_ssh.py feature/demo-guide:main    # 快进推 main
 - 每次完成实质改动（改代码、定决策、改口径、增删页面）后，同步更新第 8 节「当前状态」。
 - 第 5 节「数据事实边界」中的计数（128 / 1372 / 21 户 / 1135 头等）变化时，与 `项目全景说明（Codex读）.md` 一并核对。
 - 修改前先读全文，避免覆盖他人改动。
+## 2026-10-11 当前同步状态
+
+- GitHub `main` 基线为 `6ca4ba2`；Polar Operations 页面落在 `frontend/meteo.html`，消费 `backend/deep_api.py` 提供的 `/api/deep/*` 接口。
+- 页面已形成风险排序、证据回溯、人工核查、牧区处置建议闭环；候选风险与未确认来源均显示为待核查。
+- 本次页面改造未改动银行页面、后端模型、标签、阈值逻辑和数据文件。需要真实事件键、起止月份、影响县域和来源后，才能接入 PR-AUC、Hit@3/5、Recall@K、事件命中率与提前量。
+- 2026-10-11 的恢复、验收和限制记录见 `docs/daily/2026-10-11.md` 与 `.serena/memories/task_completion.md`。

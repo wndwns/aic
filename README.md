@@ -434,3 +434,19 @@ POST /api/import/csv           导入 CSV
 - 模型层：region_id+month 训练样本，规则 + XGBoost 混合（sklearn 兜底）
 - 气象/遥感公开数据已接入（TPDC、Open-Meteo、MODIS 及派生数据）；高德/Open-Meteo 实时外部 API 为可选集成
 - 前端使用 Vue 3 CDN + ECharts，无需构建工具
+## 2026-10-11 Polar Operations 气象运营台
+
+正式入口 `frontend/meteo.html` 现为冰白、深靛侧栏和钴蓝操作色的 Polar Operations 工作台。页面保留 `/api/deep/*` 动态接口，形成“风险排序 → 证据回溯 → 人工核查 → 牧区处置建议”闭环，并在缺少真实证据时显示“待核查/未接入”。
+
+页面使用的深度模型接口：
+
+```text
+GET /api/deep/status
+GET /api/deep/training?force=false
+GET /api/deep/risk?month=YYYY-MM
+GET /api/deep/attention?month=YYYY-MM
+GET /api/deep/fields?month=YYYY-MM
+GET /api/deep/attribution/{region_id}?month=YYYY-MM
+```
+
+PR-AUC、Hit@3/5、Recall@K、事件命中率和提前量在当前后端没有可验证的事件回放接口，因此页面明确标为“未接入”，不以 0 或样例数值冒充评估结果。NDVI 质量掩码、同比可用性、气候历史年数也保持同样口径。
